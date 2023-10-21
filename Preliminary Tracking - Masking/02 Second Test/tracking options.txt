@@ -1,0 +1,7 @@
+-look for orange / red color: motor
+-look for white line: pick highest / most extreme (how deal with left / right?)
+-look for anything that isn't blue
+
+
+other option:
+trapdoor only looking for orange, once that runs out look for anything that isn't blue
