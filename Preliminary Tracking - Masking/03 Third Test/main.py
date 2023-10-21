@@ -2,6 +2,8 @@ import cv2 as cv
 import numpy as np
 import time
 
+#this is a test!
+
 from maskfunctions import getMaskHighest, maskBlue, maskOrange
 
 cap = cv.VideoCapture("C:\\Users\\Teighin Nordholt\\Desktop\\Tech Dev Reading Break\\03 Third Test\\1.mp4")
