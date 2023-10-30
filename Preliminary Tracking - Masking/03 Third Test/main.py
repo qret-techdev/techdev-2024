@@ -2,7 +2,6 @@ import cv2 as cv
 import numpy as np
 import time
 
-#this is a test!
 
 from maskfunctions import getMaskHighest, maskBlue, maskOrange
 
