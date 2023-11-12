@@ -35,7 +35,7 @@ def maskBlue(image):
     mask = cv.GaussianBlur(mask, (5, 5), 0)
 
     #inverse mask
-    mask = cv.bitwise_not(mask)
+    #mask = cv.bitwise_not(mask)
 
     return mask
 

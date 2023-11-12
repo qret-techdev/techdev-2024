@@ -5,7 +5,7 @@ import time
 
 from maskfunctions import getMaskHighest, maskBlue, maskOrange
 
-cap = cv.VideoCapture("C:\\Users\\Teighin Nordholt\\Desktop\\Tech Dev Reading Break\\03 Third Test\\1.mp4")
+cap = cv.VideoCapture("C:\\Users\\Teighin Nordholt\\Documents\GitHub\\techdev-2024\\Preliminary Tracking - Masking\\03 Third Test\\1.mp4")
 
 while(cap.isOpened()):
     ret, frame = cap.read()
