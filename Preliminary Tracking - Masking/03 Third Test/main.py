@@ -7,6 +7,8 @@ from maskfunctions import getMaskHighest, maskBlue, maskOrange
 
 cap = cv.VideoCapture("C:\\Users\\Teighin Nordholt\\Documents\GitHub\\techdev-2024\\Preliminary Tracking - Masking\\03 Third Test\\1.mp4")
 
+l = 0
+
 while(cap.isOpened()):
     ret, frame = cap.read()
 
@@ -26,13 +28,17 @@ while(cap.isOpened()):
 
     #print mask
     cv.imshow("Output", frame)
-    cv.imshow("Blue Mask", blueMask)
+    #cv.imshow("Blue Mask", blueMask)
     #cv.imshow("Orange Mask", orangeMask)
 
     if cv.waitKey(1) == ord('q'):
         break
 
     time.sleep(0.01)
+
+    if(l==0):
+        time.sleep(5)
+        l+=1
 
 cap.release
 cv.destroyAllWindows()
