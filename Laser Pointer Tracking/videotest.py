@@ -11,17 +11,18 @@ import time
 import serial
 
 #empty array for moving average filter
+past_5 = [0,0,0,0,0]
 past_10 = [0,0,0,0,0,0,0,0,0,0]
 
 #defining video
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 #throw away first frame for image subtraction
 _, u = cap.read()
 prev_frame = cv.resize(u, (640,640), interpolation = cv.INTER_AREA)
 
 #defining pid system, first three are pid constants
-pid = PID(1, 1, 1, setpoint=0)
+pid = PID(0.1, 0.01, 0, setpoint=0)
 
 #opening serial port with arduino
 #ser = serial.Serial('COM10', 115200)
@@ -30,6 +31,11 @@ pid = PID(1, 1, 1, setpoint=0)
 #defining motor speed
 speed = 30
 prev_time = time.time()
+max_speed = 50
+max_accel = 60
+
+#defining vertical range to consider zero
+zero_range = 100
 
 while(1):
 
@@ -52,10 +58,13 @@ while(1):
  
     #converting to our coords with 0,0 at center
     loc_rel = loc - np.array((320,320))
-    cv.circle(frame, loc_rel, 5, (0, 0, 255), 2)
+    cv.circle(frame, loc, 5, (0, 255, 0), 2)
     cv.imshow('frame', frame)
     loc_rel[1] = -loc_rel[1]
     #print(loc_rel)
+
+    if(loc_rel[1] > -zero_range and loc_rel[1] < zero_range): #this kinda works lol, not well
+        loc_rel[1] = 0
 
     #exit if press q
     if cv.waitKey(1) == ord('q'):
@@ -65,20 +74,37 @@ while(1):
     past_10.pop(0)
     past_10.append(loc_rel)
 
+    past_5.pop(0)
+    past_5.append(loc_rel)
+
     #computing new average
-    mov_avg = sum(past_10)/10
+    #mov_avg = sum(past_10)/10
+    mov_avg = sum(past_5)/5
+    #print(mov_avg)
 
     #PID - getting acceleration from pid with average vertical height
-    accel = pid(mov_avg[1])
+    accel = pid(-1*mov_avg[1])
+
+    #confining acceleration
+    if(accel > max_accel):
+        accel = max_accel
+    elif(accel < -max_accel):
+        accel = -max_accel
 
     #PID - calculating new motor speed
     speed += accel * (time.time() - prev_time)
     prev_time = time.time()
 
+    #confining speed
+    if(speed > max_speed):
+        speed = max_speed
+    elif(speed < -max_speed):
+        speed = -max_speed
+
     print(speed)
 
     #serial - sending speed to arduino
-    #ser.write(f'{speed:.2f}'.encode())
+    #ser.write(f'{speed:.2f}\n'.encode()) #\n is absolutely necessary!!!
     
 cap.release
 cv.destroyAllWindows()
