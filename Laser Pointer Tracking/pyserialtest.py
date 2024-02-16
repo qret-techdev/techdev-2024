@@ -1,9 +1,9 @@
 import serial
 import time
 
-ser = serial.Serial('COM8', 115200)
+ser = serial.Serial('COM9', 115200)
 
-speeds = [-45, 45]
+speeds = [-180, 180]
 
 temp = 1
 
@@ -18,6 +18,5 @@ while(1):
     ser.write(f"{message:.2f}\n".encode())
 
     print(message)
-    #ser.flush()
 
-    time.sleep(0.02)
+    time.sleep(1)

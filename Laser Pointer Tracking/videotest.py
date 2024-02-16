@@ -15,24 +15,24 @@ past_5 = [0,0,0,0,0]
 past_10 = [0,0,0,0,0,0,0,0,0,0]
 
 #defining video
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 
 #throw away first frame for image subtraction
 _, u = cap.read()
 prev_frame = cv.resize(u, (640,640), interpolation = cv.INTER_AREA)
 
 #defining pid system, first three are pid constants
-pid = PID(0.1, 0.01, 0, setpoint=0)
+pid = PID(0.005, 0, 0.003, setpoint=0)
 
 #opening serial port with arduino
-#ser = serial.Serial('COM10', 115200)
-#time.sleep(2)
+ser = serial.Serial('COM9', 115200)
+time.sleep(2)
 
 #defining motor speed
-speed = 30
+speed = 0
 prev_time = time.time()
-max_speed = 50
-max_accel = 60
+max_speed = 60 #should be 50ish
+max_accel = 150 #should be 60ish
 
 #defining vertical range to consider zero
 zero_range = 100
@@ -47,6 +47,7 @@ while(1):
 
     #image subtraction - resizing frame and converting
     frame = cv.resize(frame, (640,640), interpolation = cv.INTER_AREA)
+    frame = cv.rotate(frame, cv.ROTATE_90_COUNTERCLOCKWISE)
 
     #image subtraction - perform subtraction
     x = subtract_prev_frame(frame, prev_frame, 69, 0)
@@ -104,7 +105,11 @@ while(1):
     print(speed)
 
     #serial - sending speed to arduino
-    #ser.write(f'{speed:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    ser.write(f'{speed:.2f}\n'.encode()) #\n is absolutely necessary!!!
+
+    if cv.waitKey(1) == ord('q'):
+        speed = 0
+        accel = 0
     
 cap.release
 cv.destroyAllWindows()
