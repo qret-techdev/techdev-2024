@@ -1,7 +1,7 @@
 const int led_red = 2;
 const int led_green = 6;
 
-float speed;
+float speed = 0;
 
 void setup() {
   Serial.begin(115200); // Initialize serial communication
@@ -15,7 +15,6 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     speed = Serial.parseFloat(); // Read speed from serial
-    Serial.println("ACK");
     writeboth(LOW);
   }
 
