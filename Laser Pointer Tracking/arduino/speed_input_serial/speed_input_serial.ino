@@ -3,13 +3,13 @@
 //motor connections
 const int dirPin = 4;
 const int stepPin = 3;
-  
+ 
 AccelStepper myStepper(AccelStepper::DRIVER, stepPin, dirPin);           // works for a4988 (Bipolar, constant current, step/direction driver)
 
 void setup()
 {  
    myStepper.setMaxSpeed(7000);   // this limits the value of setSpeed(). Raise it if you like.
-   myStepper.setSpeed(30);
+   myStepper.setSpeed(300);
   //microstepping
   pinMode(A0, OUTPUT);
   pinMode(A1, OUTPUT);

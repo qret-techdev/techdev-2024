@@ -29,7 +29,7 @@ void loop()
 {  
 
 if (Serial.available() > 0) {
-    float speedValue = -1*Serial.parseFloat(); // Read the integer value from serial input
+    float speedValue = -1*Serial.parseFloat(); // Read the float value from serial input
     speedValue = (speedValue/360)*1600;
 
     myStepper.setSpeed(speedValue);
