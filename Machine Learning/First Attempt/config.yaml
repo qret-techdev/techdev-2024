@@ -1,6 +1,0 @@
-path: C:\Users\Teighin Nordholt\Documents\GitHub\techdev-2024\Machine Learning\First Attempt\data
-train: images
-val: images
-
-names:
-  0: rocket_test

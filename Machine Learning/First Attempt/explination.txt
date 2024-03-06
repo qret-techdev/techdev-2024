@@ -1,2 +1,0 @@
-training:
-split videos of rocket launches into a bunch of pictures, grabbed a bunch and manually drew bouding boxes. all one label: rocket_test, no discimination between when it's in the air vs being distinguisible.
