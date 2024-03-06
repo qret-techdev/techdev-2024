@@ -1,7 +1,4 @@
 # ignore ALL files in ANY directory named temp
 
-No_Aug_100_Epoch_yolov7/Train/yolov7-custom3/weights/epoch_049.pt
-No_Aug_100_Epoch_yolov7/Train/yolov7-custom3/weights/best.pt
-No_Aug_100_Epoch_yolov7/Train/yolov7-custom3/weights/epoch_074.pt
-No_Aug_100_Epoch_yolov7/Train/yolov7-custom3/weights/epoch_095.pt
-No_Aug_100_Epoch_yolov7/Train/yolov7-custom3/weights/epoch_099.pt
+*.pt
+
