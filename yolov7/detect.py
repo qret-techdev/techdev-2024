@@ -1,6 +1,7 @@
 import argparse
 import time
 from pathlib import Path
+from videotest import *
 
 import cv2
 import torch
@@ -16,6 +17,7 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized,
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 y_centerAvg = 0
 x_centerAvg = 0
@@ -24,6 +26,8 @@ x_sum = 0
 
 avg_denominator = 10
 >>>>>>> c163c18b (added yolov7 code)
+=======
+>>>>>>> dfd515f7 (added pid_track function)
 
 # def find_centerBbox(xyxy):
 #     """
@@ -39,8 +43,6 @@ avg_denominator = 10
 #     x_center = (x1 + x2) / 2
 #     y_center = (y1 + y2) / 2
 #     return x_center, y_center
-
-
 
 
 
@@ -167,8 +169,13 @@ def detect(save_img=False):
                     pid_algorithm(xywh)
 =======
                     #send normalized x and y to PID algorithm
+<<<<<<< HEAD
                     #pid_algorithm(xywh)  #xywh = x_center, y_center, width, hight
 >>>>>>> c163c18b (added yolov7 code)
+=======
+                    x_center, y_center, width, hight = xywh
+                    pid_track(x_center, y_center)  
+>>>>>>> dfd515f7 (added pid_track function)
                         
 
             # Print time (inference + NMS)
