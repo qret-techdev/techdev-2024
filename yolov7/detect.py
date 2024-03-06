@@ -1,6 +1,7 @@
 import argparse
 import time
 from pathlib import Path
+from videotest import *
 
 import cv2
 import torch
@@ -15,12 +16,6 @@ from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 
 
-y_centerAvg = 0
-x_centerAvg = 0
-y_sum = 0
-x_sum = 0
-
-avg_denominator = 10
 
 # def find_centerBbox(xyxy):
 #     """
@@ -36,8 +31,6 @@ avg_denominator = 10
 #     x_center = (x1 + x2) / 2
 #     y_center = (y1 + y2) / 2
 #     return x_center, y_center
-
-
 
 
 
@@ -156,7 +149,8 @@ def detect(save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
                     
                     #send normalized x and y to PID algorithm
-                    #pid_algorithm(xywh)  #xywh = x_center, y_center, width, hight
+                    x_center, y_center, width, hight = xywh
+                    pid_track(x_center, y_center)  
                         
 
             # Print time (inference + NMS)
