@@ -15,6 +15,15 @@ from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 
 
+<<<<<<< HEAD
+=======
+y_centerAvg = 0
+x_centerAvg = 0
+y_sum = 0
+x_sum = 0
+
+avg_denominator = 10
+>>>>>>> c163c18b (added yolov7 code)
 
 # def find_centerBbox(xyxy):
 #     """
@@ -138,8 +147,14 @@ def detect(save_img=False):
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
+<<<<<<< HEAD
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+=======
+
+                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh 
+                    if save_txt:  # Write to file
+>>>>>>> c163c18b (added yolov7 code)
                         line = (cls, *xywh, conf) if opt.save_conf else (cls, *xywh)  # label format
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
@@ -148,7 +163,12 @@ def detect(save_img=False):
                         label = f'{names[int(cls)]} {conf:.2f}'
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
                     
+<<<<<<< HEAD
                     pid_algorithm(xywh)
+=======
+                    #send normalized x and y to PID algorithm
+                    #pid_algorithm(xywh)  #xywh = x_center, y_center, width, hight
+>>>>>>> c163c18b (added yolov7 code)
                         
 
             # Print time (inference + NMS)
