@@ -1,0 +1,7 @@
+make automatic for numerous images, both in terms of importing and sorting
+	maybe can index file dir?
+
+try with other videos
+
+
+train hsv range to remove as function of angle so that it uses accurate mask for where it's pointing
