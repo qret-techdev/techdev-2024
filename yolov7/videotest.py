@@ -133,6 +133,8 @@ def pid_track(x, y):
         if cv.waitKey(1) == ord('q'):
             speed = 0
             accel = 0
+
+            
+    cap.release()
+    cv.destroyAllWindows()
     
-cap.release()
-cv.destroyAllWindows()
