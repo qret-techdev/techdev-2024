@@ -90,7 +90,7 @@ def main():
 
   cap = cv2.VideoCapture(0)
   cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
+  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
   assert cap.isOpened(), "Error reading video file"
 
   while cap.isOpened():
@@ -113,7 +113,7 @@ def main():
     # frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     processed_frame, loc_x_y = process_frame(frame, model, track_history, names)
     cv2.imshow("Webcam", processed_frame)
-    loc_rel = loc_x_y - np.array((240, 320))
+    loc_rel = loc_x_y - np.array((320, 240))
     rock_x = -loc_rel[0]
     rock_y = -loc_rel[1]
         
