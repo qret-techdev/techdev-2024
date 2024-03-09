@@ -15,11 +15,11 @@ AccelStepper myStepper2(AccelStepper::DRIVER, stepPin2, dirPin2);
 void setup() {
   // Motor 1 Configuration
   myStepper1.setMaxSpeed(13000); // Set max speed
-  myStepper1.setSpeed(4000);    // Set initial speed
+  myStepper1.setSpeed(0);    // Set initial speed
   
   // Motor 2 Configuration
   myStepper2.setMaxSpeed(13000); //max speed
-  myStepper2.setSpeed(4000);    // initial speed
+  myStepper2.setSpeed(0);    // initial speed
   
   // Microstepping pins configuration
   pinMode(A0, OUTPUT);
@@ -31,19 +31,25 @@ void setup() {
   digitalWrite(A1, HIGH);
   digitalWrite(A2, HIGH);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {
   if (Serial.available() > 0) {
     // Expecting input format: speed1 speed2
-    float speed1 = Serial.parseInt(); // Reads the first speed until it encounters a non-integer character
-    float speed2 = Serial.parseInt(); // Reads the next integer after the space
-    Serial.print(speed1);
-    Serial.println(speed2);
+    String speeds = Serial.readStringUntil('\n');
+    
+    // split the string into two substrings
+    int spaceIndex = speeds.indexOf(' ');
+    String speed1_str = speeds.substring(0, spaceIndex);
+    String speed2_str = speeds.substring(spaceIndex + 1);
+
+    // convert strings to float
+    float speed1 = speed1_str.toFloat();
+    float speed2 = speed2_str.toFloat();
     
     // Apply the speeds to the stepper motors
-    if (speed1 > 0 && speed2 > 0) {
+    if (1) {
       
       speed1 = (speed1/360)*6400;
       speed2 = (speed2/360)*6400;

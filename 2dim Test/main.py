@@ -113,13 +113,13 @@ while(1):
         accel_y = 0
 
         if key == ord('w'): #THESE WILL DEPEND ON ORIENTATION OF AXES, UNTESTED
-            speedy += 5
+            speedy += 1
         elif key == ord('s'):
-            speedy -= 5
+            speedy -= 1
         elif key == ord('a'):
-            speedx += 5
+            speedx += 1
         elif key == ord('d'):
-            speedx -= 5
+            speedx -= 1
 
         delta_t = time.time()-prev_time
         prev_time = time.time()
@@ -143,8 +143,7 @@ while(1):
         prev_time = time.time()
 
     #serial - sending speeds to arduino
-    #ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    #ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
+    #ser.write(f'{xs[i]:.2f} {ys[i]:.2f}\n'.encode()) #\n is absolutely necessary!!!
     #ser.flushInput()
     #ser.flushOutput()
 
