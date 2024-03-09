@@ -113,7 +113,7 @@ def main():
     # frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     processed_frame, loc_x_y = process_frame(frame, model, track_history, names)
     cv2.imshow("Webcam", processed_frame)
-    loc_rel = loc_x_y - np.array((320, 320))
+    loc_rel = loc_x_y - np.array((240, 320))
     rock_x = -loc_rel[0]
     rock_y = -loc_rel[1]
         
