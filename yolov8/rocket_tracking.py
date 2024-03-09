@@ -13,54 +13,55 @@ names = model.model.names
 
 video_path = "file.mp4"
 cap = cv2.VideoCapture(0)
-assert cap.isOpened(), "Error reading video file"
+# assert cap.isOpened(), "Error reading video file"
 
-w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
+# w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
 
-result = cv2.VideoWriter("object_tracking.avi",
-                       cv2.VideoWriter_fourcc(*'mp4v'),
-                       fps,
-                       (w, h))
+# result = cv2.VideoWriter("object_tracking.avi",
+#                        cv2.VideoWriter_fourcc(*'mp4v'),
+#                        fps,
+#                        (w, h))
 
-while cap.isOpened():
+while (1):
     success, frame = cap.read()
     if success:
-        results = model.track(frame, persist=True, verbose=False)
+        results = model.predict(frame, persist=True, verbose=False)
         boxes = results[0].boxes.xyxy.cpu()
-        
  
         if results[0].boxes.id is not None:
             
             
             # Extract prediction results
             clss = results[0].boxes.cls.cpu().tolist()
-            track_ids = results[0].boxes.id.int().cpu().tolist()
+            # track_ids = results[0].boxes.id.int().cpu().tolist()
             confs = results[0].boxes.conf.float().cpu().tolist()
 
             # Annotator Init
             annotator = Annotator(frame, line_width=2)
 
             for box, cls, track_id in zip(boxes, clss, track_ids):
-                # Calculate the center of the bounding box
-                center_x, center_y = int((box[0] + box[2]) / 2), int((box[1] + box[3]) / 2)
+                # # Calculate the center of the bounding box
+                # center_x, center_y = int((box[0] + box[2]) / 2), int((box[1] + box[3]) / 2)
     
-                # Print the track_id and center coordinates
-                print(f"Track ID: {track_id}, Center: ({center_x}, {center_y})")
+                # # Print the track_id and center coordinates
+                # print(f"Track ID: {track_id}, Center: ({center_x}, {center_y})")
             
                 annotator.box_label(box, color=colors(int(cls), True), label=names[int(cls)])
 
-                # Store tracking history
-                track = track_history[track_id]
-                track.append((int((box[0] + box[2]) / 2), int((box[1] + box[3]) / 2)))
-                if len(track) > 30:
-                    track.pop(0)
+                # # Store tracking history
+                # track = track_history[track_id]
+                # track.append((int((box[0] + box[2]) / 2), int((box[1] + box[3]) / 2)))
+                # if len(track) > 30:
+                #     track.pop(0)
 
-                # Plot tracks
-                points = np.array(track, dtype=np.int32).reshape((-1, 1, 2))
-                cv2.circle(frame, (track[-1]), 7, colors(int(cls), True), -1)
-                cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
+                # # Plot tracks
+                # points = np.array(track, dtype=np.int32).reshape((-1, 1, 2))
+                # cv2.circle(frame, (track[-1]), 7, colors(int(cls), True), -1)
+                # cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
 
-        result.write(frame)
+        #result.write(frame)
+        #display video       
+        cv2.imshow("my webcam", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
     else:
