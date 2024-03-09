@@ -24,6 +24,7 @@ assert cap.isOpened(), "Error reading video file"
 #                        fps,
 #                        (w, h))
 
+
 while cap.isOpened():
     success, frame = cap.read()
     if success:
