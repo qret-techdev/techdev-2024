@@ -8,11 +8,11 @@ from ultralytics.utils.plotting import Annotator, colors
 from collections import defaultdict
 
 track_history = defaultdict(lambda: [])
-model = YOLO("yolov8n.pt")
+model = YOLO("best.pt")
 names = model.model.names
 
 video_path = "file.mp4"
-cap = cv2.VideoCapture(video_path)
+cap = cv2.VideoCapture(0)
 assert cap.isOpened(), "Error reading video file"
 
 w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
@@ -25,7 +25,7 @@ result = cv2.VideoWriter("object_tracking.avi",
 while cap.isOpened():
     success, frame = cap.read()
     if success:
-        results = model.predict(frame, persist=True, verbose=False)
+        results = model.track(frame, persist=True, verbose=False)
         boxes = results[0].boxes.xyxy.cpu()
         
  
