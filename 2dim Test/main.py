@@ -7,7 +7,7 @@ import numpy as np #some math, array management
 from simple_pid import PID #control system pid
 import time #measure time, calculate speed from accel and delta t
 import serial #communication with arduino
-from funcs import get_rock_x, get_rock_y
+from funcs import *
 
 #empty array for moving average filter
 mov_avg_x = np.zeros(5) #THOUGHTS ON SIZE?
@@ -26,11 +26,16 @@ time.sleep(1)
 cap = cv.VideoCapture(0) #number is webcam number, might have to change around
 time.sleep(1)
 
+#throw away first frame for image subtraction
+_, u = cap.read()
+prev_frame = cv.resize(u, (640,640), interpolation = cv.INTER_AREA)
+
 #defining motor speed
 speedy = 0
 speedx = 0
 accel_x = 0
 accel_y = 0
+delta_t = 0
 
 #defining tripwire for giving initial vertical motor speed - should only happen once!
 trip_init_guess = 0
@@ -60,22 +65,53 @@ while(1):
         speedx = 0
         speedy = 0
 
-    #getting next frame from camera
+    #image subtraction - reading frame
     ret, frame = cap.read()
     if not ret:
         print("Can't receive frame. Exiting ...")
         break
 
-    #resizing frame, converting, and rotating
-    frame = cv.resize(frame, (640,640), interpolation = cv.INTER_AREA) #probably don't have to resize now, that was only for laser pointer testing
+    #image subtraction - resizing frame, converting, and rotating
+    frame = cv.resize(frame, (640,640), interpolation = cv.INTER_AREA)
     frame = cv.rotate(frame, cv.ROTATE_90_COUNTERCLOCKWISE)
+
+    #image subtraction - perform subtraction
+    x = subtract_prev_frame(frame, prev_frame, 69, 0)
+    prev_frame = frame
+    frame_draw = np.copy(frame)
+
+    #image subtraction - finding max
+    loc = findMax(x)
+ 
+    #converting to our coords with 0,0 at center
+    loc_rel = loc - np.array((320,320))
+    cv.circle(frame, loc, 5, (0, 255, 0), 2)
     cv.imshow('frame', frame)
 
     #reading rocket position
-    rock_x = get_rock_x(frame)
-    rock_y = get_rock_y(frame)
+    #rock_x = get_rock_x(frame)
+    #rock_y = get_rock_y(frame)
+    rock_x = -loc_rel[0]
+    rock_y = -loc_rel[1]
+
+    #rolling the moving average arrray to get rid of first value
+    mov_avg_x = np.roll(mov_avg_x, -1)
+    mov_avg_y = np.roll(mov_avg_y, -1)
+
+    #replacing oldest value (moved to end with roll) with the newest
+    mov_avg_x[-1] = rock_x
+    mov_avg_y[-1] = rock_y
+
+    #averaging the array
+    rock_x_filt = (sum(mov_avg_x))/5
+    rock_y_filt = (sum(mov_avg_y))/5
+
+    print(rock_x_filt, rock_y_filt)
 
     if(sys_state==0): #keyboard control when in manual mode
+        accel_x = 0
+        accel_y = 0
+
         if key == ord('w'): #THESE WILL DEPEND ON ORIENTATION OF AXES, UNTESTED
             speedy += 5
         elif key == ord('s'):
@@ -85,6 +121,9 @@ while(1):
         elif key == ord('d'):
             speedx -= 5
 
+        delta_t = time.time()-prev_time
+        prev_time = time.time()
+
     elif(sys_state==1): #doing pid and changing vel if in automatic
 
         #giving intial guess if first time going to automatic state
@@ -92,18 +131,6 @@ while(1):
             speedx = 0
             speedy = speedy_init_guess
             trip_init_guess += 1
-
-        #rolling the moving average arrray to get rid of first value
-        np.roll(mov_avg_x, -1)
-        np.roll(mov_avg_y, -1)
-
-        #replacing oldest value (moved to end with roll) with the newest
-        mov_avg_x[-1] = rock_x
-        mov_avg_y[-1] = rock_y
-
-        #averaging the array
-        rock_x_filt = (sum(mov_avg_x))/len(mov_avg_x)
-        rock_y_filt = (sum(mov_avg_y))/len(mov_avg_y)
 
         #getting motor accelerations
         accel_x = pidx(rock_x_filt)
@@ -114,9 +141,6 @@ while(1):
         speedx += accel_x * delta_t
         speedy += accel_y * delta_t
         prev_time = time.time()
-
-
-    print(f'{speedx} {speedy}')
 
     #serial - sending speeds to arduino
     #ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!

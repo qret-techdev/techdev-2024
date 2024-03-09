@@ -25,7 +25,7 @@ prev_frame = cv.resize(u, (640,640), interpolation = cv.INTER_AREA)
 pid = PID(0.012, 0.0009, 0.02, setpoint=0)
 
 #opening serial port with arduino
-ser = serial.Serial('COM9', 115200)
+#ser = serial.Serial('COM9', 115200)
 time.sleep(2)
 
 #defining motor speed
@@ -79,7 +79,7 @@ while(1):
     cv.circle(frame, loc, 5, (0, 255, 0), 2)
     cv.imshow('frame', frame)
     loc_rel[1] = -loc_rel[1]
-    #print(loc_rel)
+    print(loc_rel)
 
     if(loc_rel[1] > -zero_range and loc_rel[1] < zero_range): #this kinda works lol, not well
         loc_rel[1] = 0
@@ -120,12 +120,12 @@ while(1):
     elif(speed < -max_speed):
         speed = -max_speed
 
-    print(f'\nSpeed: {speed:.2f} | Accel: {accel:.2f} | Time Delta {delta_t:.2f}')
+    #print(f'\nSpeed: {speed:.2f} | Accel: {accel:.2f} | Time Delta {delta_t:.2f}')
 
     #serial - sending speed to arduino
-    ser.write(f'{speed:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    ser.flushInput()
-    ser.flushOutput()
+    #ser.write(f'{speed:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    #ser.flushInput()
+    #ser.flushOutput()
 
     #reset parameters of q is pressed
     if cv.waitKey(1) == ord('q'):
