@@ -30,8 +30,8 @@ while cap.isOpened():
         
  
         if results[0].boxes.id is not None:
-            print(boxes)
-
+            
+            
             # Extract prediction results
             clss = results[0].boxes.cls.cpu().tolist()
             track_ids = results[0].boxes.id.int().cpu().tolist()
@@ -41,6 +41,12 @@ while cap.isOpened():
             annotator = Annotator(frame, line_width=2)
 
             for box, cls, track_id in zip(boxes, clss, track_ids):
+                # Calculate the center of the bounding box
+                center_x, center_y = int((box[0] + box[2]) / 2), int((box[1] + box[3]) / 2)
+    
+                # Print the track_id and center coordinates
+                print(f"Track ID: {track_id}, Center: ({center_x}, {center_y})")
+            
                 annotator.box_label(box, color=colors(int(cls), True), label=names[int(cls)])
 
                 # Store tracking history
