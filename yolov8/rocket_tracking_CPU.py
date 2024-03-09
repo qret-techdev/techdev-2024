@@ -28,14 +28,14 @@ while cap.isOpened():
     success, frame = cap.read()
     if success:
         results = model.track(frame, persist=True)
-        boxes = results[0].boxes.xyxy.cpu()
+        boxes = results[0].boxes.xyxy.cuda()
 
         if results[0].boxes.id is not None:
 
             # Extract prediction results
-            clss = results[0].boxes.cls.cpu().tolist()
-            track_ids = results[0].boxes.id.int().cpu().tolist()
-            confs = results[0].boxes.conf.float().cpu().tolist()
+            clss = results[0].boxes.cls.cuda().tolist()
+            track_ids = results[0].boxes.id.int().cuda().tolist()
+            confs = results[0].boxes.conf.float().cuda().tolist()
 
             # Annotator Init
             annotator = Annotator(frame, line_width=2)
