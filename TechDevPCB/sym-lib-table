@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "DRV8825_STEPPER_MOTOR_DRIVER_CARRIER")(type "KiCad")(uri "${KIPRJMOD}/Symbols/DRV8825_STEPPER_MOTOR_DRIVER_CARRIER.kicad_sym")(options "")(descr ""))
+)
