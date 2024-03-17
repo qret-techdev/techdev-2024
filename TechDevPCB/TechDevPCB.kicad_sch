@@ -1334,8 +1334,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 2be1f56b-cf91-458e-9ff2-12d7e66efb2d)
   )
-  (text "Q: Solder bridge for sleep, rst pins of motor drivers?\n"
-    (at 181.61 160.02 0)
+  (text "INCREASE TRACE WIDTH FOR BATT IN" (at 181.61 160.02 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 33ed92c8-d1bf-4ffa-b196-e948586b6de8)
   )
@@ -2924,8 +2923,8 @@
     (property "Datasheet" "~" (at 34.29 24.13 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 14584583-aed6-4d0b-8c9e-ff2e084a4fb3))
-    (pin "2" (uuid 2b530c8b-59e7-449c-ba8d-cea3acc7f25d))
+    (pin "1" (uuid 49865ed3-b9fb-49ad-93ba-f2102cf7706a))
+    (pin "2" (uuid 28cd9deb-f252-406b-bc95-d1aeec8b3552))
     (instances
       (project "TechDevPCB"
         (path "/231951db-cfbe-4957-9557-a633f503d98c"
