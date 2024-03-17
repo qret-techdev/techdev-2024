@@ -1334,7 +1334,8 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 2be1f56b-cf91-458e-9ff2-12d7e66efb2d)
   )
-  (text "INCREASE TRACE WIDTH FOR BATT IN" (at 181.61 160.02 0)
+  (text "Research trace width\nRevise naming using Carter convention\nDelete screw terminals from schematic and board, put back in\n"
+    (at 181.61 163.83 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 33ed92c8-d1bf-4ffa-b196-e948586b6de8)
   )
