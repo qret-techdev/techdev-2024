@@ -99,7 +99,7 @@ def main():
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
   trip_init_guess = 0
-  speedy_init_guess = 30 #initial guess for y motor speed - only given once when changing to automatic mode for the first time
+  speedy_init_guess = 0 #initial guess for y motor speed - only given once when changing to automatic mode for the first time
 
   #defining max motor speeds NOT IMPLEMENTED
   max_speed = 90 #should be 50ish
@@ -157,9 +157,9 @@ def main():
       elif key == ord('s'):
         speedy -= 5
       elif key == ord('a'):
-        speedx += 5
-      elif key == ord('d'):
         speedx -= 5
+      elif key == ord('d'):
+        speedx += 5
 
       delta_t = time.time()-prev_time
       prev_time = time.time()
@@ -173,8 +173,8 @@ def main():
         trip_init_guess += 1
 
       #getting motor accelerations
-      accel_x = pidx(loc_x_y_filt[0])
-      accel_y = pidy(loc_x_y_filt[1])
+      accel_x = -pidx(loc_x_y_filt[0])
+      accel_y = -pidy(loc_x_y_filt[1])
       #updating speeds
       delta_t = time.time()-prev_time
       speedx += accel_x * delta_t
@@ -187,9 +187,10 @@ def main():
     ser.flushInput()
     ser.flushOutput()
 
-    print(f'\n State: {sys_state} Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
+    print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
     # read key press
     result.write(frame) 
+
   cap.release()
   cv2.destroyAllWindows()
 
