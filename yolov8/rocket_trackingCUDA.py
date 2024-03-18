@@ -53,10 +53,13 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
   loc_filt = (0,0)
   results = model.track(frame, persist=True)
   boxes = results[0].boxes.xyxy
+  # boxes = results[0].boxes.xyxy.cpu() # CPU tests
 
   if results[0].boxes.id is not None:
     clss = results[0].boxes.cls.tolist()
     track_ids = results[0].boxes.id.int().tolist()
+    # clss = results[0].boxes.cls.cpu().tolist()             # CPU test
+    # track_ids = results[0].boxes.id.int().cpu().tolist()   # CPU test
 
     annotator = Annotator(frame, line_width=2)
 
