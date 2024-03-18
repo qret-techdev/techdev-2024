@@ -1,8 +1,8 @@
 import cv2
 
-cap = cv2.VideoCapture(0)  # Start capturing video from the first webcam
+cap = cv2.VideoCapture(1)  # Start capturing video from the first webcam
 cap.set(3, 640)  # Set the width of the video frames
-cap.set(4, 480)  # Set the height of the video frames
+cap.set(4, 640)  # Set the height of the video frames
 
 if not cap.isOpened():  # Check if the video capture has been initialized correctly
     print("Error: Could not open video device.")

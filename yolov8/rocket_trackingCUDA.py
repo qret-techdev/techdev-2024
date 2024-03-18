@@ -12,18 +12,20 @@ from ultralytics.utils.plotting import Annotator, colors
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
 
+ser = serial.Serial('COM4', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 AVG_NUMBER = 10
+DEVICE_NUMBER = 1
 
 def process_center(loc, mov_avg_x, mov_avg_y):
-  loc_rel = loc - np.array((320, 240))
+  loc_rel = loc - np.array((320, 320))
         
   #rolling the moving average arrray to get rid of first value
   mov_avg_x = np.roll(mov_avg_x, -1)
   mov_avg_y = np.roll(mov_avg_y, -1)
 
   #replacing oldest value (moved to end with roll) with the newest
-  mov_avg_x[-1] = -loc_rel[0]
+  mov_avg_x[-1] = loc_rel[0]
   mov_avg_y[-1] = -loc_rel[1]
 
   #averaging the array
@@ -111,9 +113,10 @@ def main():
   model = YOLO("best.pt")
   names = model.model.names
 
-  cap = cv2.VideoCapture(0)
-  # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-  # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
+  cap = cv2.VideoCapture(DEVICE_NUMBER)
+  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
+  
 
   w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
   result = cv2.VideoWriter("object_tracking.avi",
@@ -140,7 +143,8 @@ def main():
     success, frame = cap.read()
     if not success:
       break
-    # frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    frame = cv2.resize(frame, (640,640), interpolation = cv2.INTER_AREA)
+    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     processed_frame, loc_x_y_filt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)
     cv2.imshow("Webcam", processed_frame)
     
@@ -177,14 +181,14 @@ def main():
       speedy += accel_y * delta_t
       prev_time = time.time()
 
-    #serial - sending speeds to arduino
-    #ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    #ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
-    #ser.flushInput()
-    #ser.flushOutput()
+    # serial - sending speeds to arduino
+    ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
+    ser.flushInput()
+    ser.flushOutput()
 
-    #print(f'\nSpeedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
-    #read key press
+    print(f'\n State: {sys_state} Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
+    # read key press
     result.write(frame) 
   cap.release()
   cv2.destroyAllWindows()
