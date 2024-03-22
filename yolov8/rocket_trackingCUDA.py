@@ -12,13 +12,21 @@ from ultralytics.utils.plotting import Annotator, colors
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
 
-ser = serial.Serial('COM4', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+#ser = serial.Serial('COM4', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 AVG_NUMBER = 10
 DEVICE_NUMBER = 1
+Y_FRAME_SIZE = 640
+X_FRAME_SIZE = 640
+CUDA = 0
 
+# !!! Won't doing a sum using that method cause the initial centers to 
+# !!! closer to 0 and not an accurate representation of where the 
+# !!! rocket is?
+# The rocket would need to be in frame before launch for atleast 
+# AVG_NUMBER
 def process_center(loc, mov_avg_x, mov_avg_y):
-  loc_rel = loc - np.array((320, 320))
+  loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
         
   #rolling the moving average arrray to get rid of first value
   mov_avg_x = np.roll(mov_avg_x, -1)
@@ -52,14 +60,16 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
   loc = (0, 0)
   loc_filt = (0,0)
   results = model.track(frame, persist=True)
-  boxes = results[0].boxes.xyxy
-  # boxes = results[0].boxes.xyxy.cpu() # CPU tests
+  if(CUDA):  boxes = results[0].boxes.xyxy
+  else: boxes = results[0].boxes.xyxy.cpu() # CPU tests
 
   if results[0].boxes.id is not None:
-    clss = results[0].boxes.cls.tolist()
-    track_ids = results[0].boxes.id.int().tolist()
-    # clss = results[0].boxes.cls.cpu().tolist()             # CPU test
-    # track_ids = results[0].boxes.id.int().cpu().tolist()   # CPU test
+    if(CUDA): 
+      clss = results[0].boxes.cls.tolist()
+      track_ids = results[0].boxes.id.int().tolist()
+    else:
+      clss = results[0].boxes.cls.cpu().tolist()             # CPU test
+      track_ids = results[0].boxes.id.int().cpu().tolist()   # CPU test
 
     annotator = Annotator(frame, line_width=2)
 
@@ -72,7 +82,7 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
       track.append((int(loc[0]), int(loc[1])))
       if len(track) > 30:
         track.pop(0)
-
+        
       points = np.array(track, dtype=np.int32).reshape((-1, 1, 2))
       cv2.circle(frame, track[-1], 7, colors(int(cls), True), -1)
       cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
@@ -117,8 +127,8 @@ def main():
   names = model.model.names
 
   cap = cv2.VideoCapture(DEVICE_NUMBER)
-  cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
+  cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
+  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
   
 
   w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
@@ -129,7 +139,7 @@ def main():
   
   assert cap.isOpened(), "Error reading video file"
 
-  while cap.isOpened():
+  while 1:
       
     key = cv2.waitKey(1)
 
@@ -146,7 +156,7 @@ def main():
     success, frame = cap.read()
     if not success:
       break
-    frame = cv2.resize(frame, (640,640), interpolation = cv2.INTER_AREA)
+    frame = cv2.resize(frame, (X_FRAME_SIZE,Y_FRAME_SIZE), interpolation = cv2.INTER_AREA)
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     processed_frame, loc_x_y_filt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)
     cv2.imshow("Webcam", processed_frame)
@@ -184,11 +194,11 @@ def main():
       speedy += accel_y * delta_t
       prev_time = time.time()
 
-    # serial - sending speeds to arduino
-    ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
-    ser.flushInput()
-    ser.flushOutput()
+    # # serial - sending speeds to arduino
+    # ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    # ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
+    # ser.flushInput()
+    # ser.flushOutput()
 
     print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
     # read key press
