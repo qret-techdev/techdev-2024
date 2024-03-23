@@ -12,13 +12,13 @@ from ultralytics.utils.plotting import Annotator, colors
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
 
-#ser = serial.Serial('COM4', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+ser = serial.Serial('COM4', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
-AVG_NUMBER = 10
+AVG_NUMBER = 3
 DEVICE_NUMBER = 1
 Y_FRAME_SIZE = 640
-X_FRAME_SIZE = 640
-CUDA = 0
+X_FRAME_SIZE = 480
+CUDA = 1
 
 # !!! Won't doing a sum using that method cause the initial centers to 
 # !!! closer to 0 and not an accurate representation of where the 
@@ -78,6 +78,7 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
 
       track = track_history[track_id]
       loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
+      # print("\nUnprocessed Y: ", loc[1])
       loc_filt = process_center(loc, mov_avg_x,  mov_avg_y)
       track.append((int(loc[0]), int(loc[1])))
       if len(track) > 30:
@@ -101,7 +102,7 @@ def main():
   #AXES: y represents moving the camera 'up and down', x is rotating the entire setup
   #defining pid system, first three are pid constants
   pidx = PID(0.012, 0.0009, 0.02, setpoint=0) #has been tuned a little bit
-  pidy = PID(0.012, 0.0009, 0.02, setpoint=0) #copy of the x consts, completely untested
+  pidy = PID(0.047, 0.0010, 0.052, setpoint=0) #copy of the x consts, completely untested
 
   #defining motor speed
   speedy = 0
@@ -109,6 +110,7 @@ def main():
   accel_x = 0
   accel_y = 0
   delta_t = 0
+  delta_frame = 0
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
   trip_init_guess = 0
@@ -119,6 +121,7 @@ def main():
   max_accel = 180 #should be 60ish
 
   prev_time = time.time() #used to find time step
+  prev_frame_time = time.time()
 
   #defining state variable: 0 indicating manual mode with no pid, 1 automatic tracking with ml and pid
   sys_state = 0
@@ -127,8 +130,8 @@ def main():
   names = model.model.names
 
   cap = cv2.VideoCapture(DEVICE_NUMBER)
-  cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
+  # cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
+  # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
   
 
   w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
@@ -137,7 +140,7 @@ def main():
                        fps,
                        (w, h))
   
-  assert cap.isOpened(), "Error reading video file"
+  # assert cap.isOpened(), "Error reading video file"
 
   while 1:
       
@@ -156,9 +159,12 @@ def main():
     success, frame = cap.read()
     if not success:
       break
-    frame = cv2.resize(frame, (X_FRAME_SIZE,Y_FRAME_SIZE), interpolation = cv2.INTER_AREA)
+    #frame = cv2.resize(frame, (X_FRAME_SIZE,Y_FRAME_SIZE), interpolation = cv2.INTER_AREA)
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    delta_frame = time.time()-prev_frame_time
     processed_frame, loc_x_y_filt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)
+    prev_frame_time = time.time()
+    print(f"\nX: {10*loc_x_y_filt[0]:.2f} | Y: {10*loc_x_y_filt[1]:.2f} | Time: {1000*delta_frame:.2f}")
     cv2.imshow("Webcam", processed_frame)
     
     if(sys_state==0): #keyboard control when in manual mode
@@ -194,11 +200,12 @@ def main():
       speedy += accel_y * delta_t
       prev_time = time.time()
 
-    # # serial - sending speeds to arduino
+    # serial - sending speeds to arduino
     # ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    # ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
-    # ser.flushInput()
-    # ser.flushOutput()
+    ser.write(f'{0}\n'.encode())
+    ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
+    ser.flushInput()
+    ser.flushOutput()
 
     print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
     # read key press
