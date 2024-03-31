@@ -3,9 +3,25 @@ import serial
 import numpy as np
 
 #opening serial port with arduino
-ser = serial.Serial('COM10', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+ser = serial.Serial('COM9', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 time.sleep(1)
 
+while(1):
+    x = int(input('x'))
+    y = int(input('y'))
+
+    ser.write(f'{x:.2f} {y:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    #ser.write(f'\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
+    ser.flushInput()
+    ser.flushOutput()
+
+
+
+
+
+
+
+"""
 #xs = 1*np.array([2, 4, 8, 15, 20, 25, 30, 40, 50, 60, 65, 75, 75, 80, 85, 90, 90, 90, 80, 70, 60, 50, 45, 40, 30, 15, 5, 0])
 xs = -1*np.array([2, 4, 8, 15, 20, 25, 30, 40, 50, 60, 65, 75, 70, 60, 50, 45, 40, 30, 15, 5, 0])
 ys = np.ones(len(xs))
@@ -18,4 +34,4 @@ for i in range(len(xs)):
     #ser.write(f'\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
     ser.flushInput()
     ser.flushOutput()
-    time.sleep(0.25)
+    time.sleep(0.25)"""

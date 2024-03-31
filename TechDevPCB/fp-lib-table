@@ -1,4 +1,4 @@
 (fp_lib_table
   (version 7)
-  (lib (name "Footprints")(type "KiCad")(uri "${KIPRJMOD}/Footprints")(options "")(descr ""))
+  (lib (name "Local")(type "KiCad")(uri "C:/Users/Teighin Nordholt/Documents/GitHub/techdev-2024/TechDevPCB")(options "")(descr ""))
 )
