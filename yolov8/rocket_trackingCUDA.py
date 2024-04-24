@@ -12,7 +12,7 @@ from ultralytics.utils.plotting import Annotator, colors
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
 
-ser = serial.Serial('COM4', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+ser = serial.Serial('COM6', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 AVG_NUMBER = 3
 DEVICE_NUMBER = 1
@@ -101,8 +101,9 @@ def main():
 
   #AXES: y represents moving the camera 'up and down', x is rotating the entire setup
   #defining pid system, first three are pid constants
-  pidx = PID(0.012, 0.0009, 0.02, setpoint=0) #has been tuned a little bit
-  pidy = PID(0.047, 0.0010, 0.052, setpoint=0) #copy of the x consts, completely untested
+  pidx = PID(0.047, 0.0011, 0.10, setpoint=0)
+  pidy = PID(0.047, 0.0011, 0.10, setpoint=0)
+  #kd=0.15 seems to be te upper bound. 0.09 seems good
 
   #defining motor speed
   speedy = 0
@@ -147,6 +148,7 @@ def main():
     key = cv2.waitKey(1)
 
     if key == ord('q'): #exit if q is pressed
+
       break
 
     if key == ord(' '): #toggle state if space is pressed
@@ -180,6 +182,7 @@ def main():
       elif key == ord('d'):
         speedx += 5
 
+  
       delta_t = time.time()-prev_time
       prev_time = time.time()
 
@@ -187,12 +190,12 @@ def main():
      
       #giving intial guess if first time going to automatic state
       if(trip_init_guess==0):
-        speedx = 0
+        #speedy = 0
         speedy = speedy_init_guess
         trip_init_guess += 1
 
       #getting motor accelerations
-      accel_x = -pidx(loc_x_y_filt[0])
+      accel_x = pidx(loc_x_y_filt[0])
       accel_y = -pidy(loc_x_y_filt[1])
       #updating speeds
       delta_t = time.time()-prev_time
@@ -201,9 +204,9 @@ def main():
       prev_time = time.time()
 
     # serial - sending speeds to arduino
-    # ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    ser.write(f'{0}\n'.encode())
-    ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
+    ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
+    ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
     ser.flushInput()
     ser.flushOutput()
 
@@ -211,6 +214,16 @@ def main():
     # read key press
     result.write(frame) 
 
+  #setting motors to zero wen we sut off
+  speedx=0
+  speedy=0
+  
+  # serial - sending speeds to arduino
+  ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+  #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
+  ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
+  ser.flushInput()
+  ser.flushOutput()  
   cap.release()
   cv2.destroyAllWindows()
 
