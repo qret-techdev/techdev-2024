@@ -29,7 +29,6 @@ prev_time = time.time() #used to find time step
 
 #defining state variable: 0 indicating manual mode with no pid, 1 automatic tracking with ml and pid
 sys_state = 0
-  
 
 
 while 1:
@@ -41,6 +40,7 @@ while 1:
 
     # serial - sending speeds to arduino
     ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    #  ser.write(f'{0}\n'.encode())
     ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
     ser.flushInput()
     ser.flushOutput()
