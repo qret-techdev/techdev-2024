@@ -12,7 +12,7 @@ from ultralytics.utils.plotting import Annotator, colors
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
 
-ser = serial.Serial('COM6', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 AVG_NUMBER = 3
 DEVICE_NUMBER = 1
@@ -102,7 +102,7 @@ def main():
   #AXES: y represents moving the camera 'up and down', x is rotating the entire setup
   #defining pid system, first three are pid constants
   pidx = PID(0.047, 0.0011, 0.10, setpoint=0)
-  pidy = PID(0.047, 0.0011, 0.10, setpoint=0)
+  pidy = PID(0.0444, 0, 0, setpoint=0)
   #kd=0.15 seems to be te upper bound. 0.09 seems good
 
   #defining motor speed
@@ -203,6 +203,7 @@ def main():
       speedy += accel_y * delta_t
       prev_time = time.time()
 
+    speedx=0
     # serial - sending speeds to arduino
     ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
     #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
@@ -220,7 +221,6 @@ def main():
   
   # serial - sending speeds to arduino
   ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-  #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
   ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
   ser.flushInput()
   ser.flushOutput()  

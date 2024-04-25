@@ -55,7 +55,8 @@ void setup() {
 void loop() {
 
   //read battery voltage
-  battVolt = (5*(analogRead(readBatt))/1024)*4;
+  battVolt = (5*((float)analogRead(readBatt))/1024)*4;
+  Serial.println(battVolt);
 
   //updating time
   unsigned long currMills = millis();
