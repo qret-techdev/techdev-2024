@@ -9,16 +9,18 @@ import serial #communication with arduino
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
-"""FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
-  returning the x and y number of pixels from the center of the rocket"""
-
-ser = serial.Serial('COM6', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
-
 AVG_NUMBER = 3
-DEVICE_NUMBER = 1
+DEVICE_NUMBER = 0
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
-CUDA = 1
+SERIAL = 0
+
+
+"""FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
+  returning the x and y number of pixels from the center of the rocket"""
+if(SERIAL):
+  ser = serial.Serial('COM6', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+
 
 # !!! Won't doing a sum using that method cause the initial centers to 
 # !!! closer to 0 and not an accurate representation of where the 
@@ -60,16 +62,12 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
   loc = (0, 0)
   loc_filt = (0,0)
   results = model.track(frame, persist=True)
-  if(CUDA):  boxes = results[0].boxes.xyxy
-  else: boxes = results[0].boxes.xyxy.cpu() # CPU tests
+  boxes = results[0].boxes.xyxy
 
   if results[0].boxes.id is not None:
-    if(CUDA): 
-      clss = results[0].boxes.cls.tolist()
-      track_ids = results[0].boxes.id.int().tolist()
-    else:
-      clss = results[0].boxes.cls.cpu().tolist()             # CPU test
-      track_ids = results[0].boxes.id.int().cpu().tolist()   # CPU test
+    clss = results[0].boxes.cls.tolist()
+    track_ids = results[0].boxes.id.int().tolist()
+
 
     annotator = Annotator(frame, line_width=2)
 
@@ -131,13 +129,13 @@ def main():
   names = model.model.names
 
   cap = cv2.VideoCapture(DEVICE_NUMBER)
-  # cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
-  # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
+  cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
+  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
   
 
   w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
   result = cv2.VideoWriter("object_tracking.avi",
-                       cv2.VideoWriter_fourcc(*'mp4v'),
+                       cv2.VideoWriter_fourcc(*'MJPG'),
                        fps,
                        (w, h))
   
@@ -167,6 +165,10 @@ def main():
     processed_frame, loc_x_y_filt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)
     prev_frame_time = time.time()
     print(f"\nX: {10*loc_x_y_filt[0]:.2f} | Y: {10*loc_x_y_filt[1]:.2f} | Time: {1000*delta_frame:.2f}")
+    
+    # Write the annotated frame to the output video
+    result.write(processed_frame)
+    # Display the annotated frame
     cv2.imshow("Webcam", processed_frame)
     
     if(sys_state==0): #keyboard control when in manual mode
@@ -203,27 +205,28 @@ def main():
       speedy += accel_y * delta_t
       prev_time = time.time()
 
+    if(SERIAL):
+      # serial - sending speeds to arduino
+      ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+      #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
+      ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
+      ser.flushInput()
+      ser.flushOutput()
+
+    print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
+    # read key press
+
+
+  #setting motors to zero wen we sut off
+  speedx=0
+  speedy=0
+  if(SERIAL):
     # serial - sending speeds to arduino
     ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
     #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
     ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
     ser.flushInput()
-    ser.flushOutput()
-
-    print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
-    # read key press
-    result.write(frame) 
-
-  #setting motors to zero wen we sut off
-  speedx=0
-  speedy=0
-  
-  # serial - sending speeds to arduino
-  ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-  #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
-  ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
-  ser.flushInput()
-  ser.flushOutput()  
+    ser.flushOutput()  
   cap.release()
   cv2.destroyAllWindows()
 
