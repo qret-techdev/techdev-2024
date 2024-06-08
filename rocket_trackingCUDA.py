@@ -144,6 +144,7 @@ def main():
   # assert cap.isOpened(), "Error reading video file"
 
   while 1:
+    totaltime_prev = time.time()
       
     key = cv2.waitKey(1)
 
@@ -214,6 +215,8 @@ def main():
     print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
     # read key press
     result.write(frame) 
+    totaltime_new = time.time()
+    print(f'\n Total Time: {totaltime_new-totaltime_prev:.2f}')
 
   #setting motors to zero wen we sut off
   speedx=0
