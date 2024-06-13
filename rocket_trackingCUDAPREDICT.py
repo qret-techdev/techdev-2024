@@ -116,6 +116,8 @@ def main():
   t_delay = 0.35
   prevx = 0
   prevy = 0
+  prevvelx = 0
+  prevvey = 0 #we should make vectors for these at some point lol
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
   trip_init_guess = 0
@@ -192,12 +194,22 @@ def main():
         trip_init_guess += 1
 
       #getting motor accelerations using predicted location
-      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
-      motor_accely = -pidy(loc_x_y_filt[1] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+      # x = x0 + vt + 1/2at^2
+      velx = (loc_x_y_filt[0]-prevx)/delta_t
+      vely = (loc_x_y_filt[1]-prevy)/delta_t
+
+      accelx = (velx - prevvelx)/delta_t
+      accely = (vely - prevvely)/delta_t
+
+      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*velx + 0.5*accelx*(t_delay**2))
+      motor_accely = -pidy(loc_x_y_filt[1] + t_delay*vely + 0.5*accely*(t_delay**2))
 
       #updating previous locations
       prevx = loc_x_y_filt[0]
       prevy = loc_x_y_filt[1]
+
+      prevvelx = velx
+      prevvely = vely
 
       #updating speeds
       delta_t = time.time()-prev_time
