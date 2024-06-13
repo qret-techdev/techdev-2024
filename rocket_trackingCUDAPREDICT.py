@@ -9,7 +9,14 @@ import serial #communication with arduino
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
+<<<<<<< HEAD
 import datetime
+=======
+"""FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
+  returning the x and y number of pixels from the center of the rocket"""
+
+ser = serial.Serial('COM3', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+>>>>>>> 95d3c9ef (Slowed down control to make it slightly more bearable)
 
 AVG_NUMBER = 3
 DEVICE_NUMBER = 0
@@ -97,7 +104,7 @@ def main():
   #AXES: y represents moving the camera 'up and down', x is rotating the entire setup
   #defining pid system, first three are pid constants
   pidx = PID(0.047, 0.0011, 0.10, setpoint=0)
-  pidy = PID(0.0444, 0, 0, setpoint=0)
+  pidy = PID(0.015, 0.00002, 0.0125, setpoint=0)
   #kd=0.15 seems to be te upper bound. 0.09 seems good
 
   #defining motor speed
@@ -108,11 +115,9 @@ def main():
   delta_t = 0
 
   #defining variables to predict location
-  t_delay = 0.4
+  t_delay = 0.35
   prevx = 0
   prevy = 0
-  velx = 0
-  vely = 0
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
   trip_init_guess = 0
@@ -176,9 +181,15 @@ def main():
       accel[1] = 0
 
       if key == ord('w'):
+<<<<<<< HEAD
         speed[1] += 5
       elif key == ord('s'):
         speed[0] -= 5
+=======
+        motor_speedy += 2
+      elif key == ord('s'):
+        motor_speedy -= 2
+>>>>>>> 95d3c9ef (Slowed down control to make it slightly more bearable)
       elif key == ord('a'):
         speed[1] -= 5
       elif key == ord('d'):
@@ -203,7 +214,10 @@ def main():
 =======
       motor_accelx = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
       motor_accely = -pidy(loc_x_y_filt[1] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+<<<<<<< HEAD
 >>>>>>> b91b372d (fixed pidy calculation)
+=======
+>>>>>>> 95d3c9ef (Slowed down control to make it slightly more bearable)
 
       #updating previous locations
       prevx = loc_x_y_filt[0]
