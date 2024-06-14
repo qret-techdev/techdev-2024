@@ -9,9 +9,6 @@ import serial #communication with arduino
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
-"""FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
-  returning the x and y number of pixels from the center of the rocket"""
-
 ser = serial.Serial('COM3', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 AVG_NUMBER = 3
@@ -239,6 +236,7 @@ def main():
   ser.flushInput()
   ser.flushOutput()  
   cap.release()
+  result.release()
   cv2.destroyAllWindows()
 
 if __name__ == "__main__":
