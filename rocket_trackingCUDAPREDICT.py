@@ -117,8 +117,10 @@ def main():
   prevvey = 0 #we should make vectors for these at some point lol
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
+  rocket_vel = 30 #rocket velocity off rail in m/s
+  rocket_distance = 100 #distance to launch rail in m
   trip_init_guess = 0
-  motor_speedy_init_guess = 0 #initial guess for y motor speed - only given once when changing to automatic mode for the first time
+  motor_speedy_init_guess = rocket_vel/rocket_distance #initial guess for y motor speed - only given once when changing to automatic mode for the first time
 
   #defining max motor speeds NOT IMPLEMENTED
   max_speed = 90 #should be 50ish
