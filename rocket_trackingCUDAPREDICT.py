@@ -10,11 +10,14 @@ from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import datetime
 =======
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
 
+=======
+>>>>>>> 5810c804 (untested fix for video capture corruption)
 ser = serial.Serial('COM3', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 >>>>>>> 95d3c9ef (Slowed down control to make it slightly more bearable)
 
