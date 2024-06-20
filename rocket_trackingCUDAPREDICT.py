@@ -155,6 +155,10 @@ def main():
     if key == ord(' '): #toggle state if space is pressed
       sys_state = (sys_state+1)%2
 
+      #reset pid when switching states
+      pidx.reset()
+      pidy.reset()
+
     if key == ord('r'): #reset motor speeds if r is pressed
       motor_speedx = 0
       motor_speedy = 0    
