@@ -9,18 +9,16 @@ import serial #communication with arduino
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
-AVG_NUMBER = 3
-DEVICE_NUMBER = 0
-Y_FRAME_SIZE = 640
-X_FRAME_SIZE = 480
-SERIAL = 0
-
-
 """FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
   returning the x and y number of pixels from the center of the rocket"""
-if(SERIAL):
-  ser = serial.Serial('COM6', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
+ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+
+AVG_NUMBER = 3
+DEVICE_NUMBER = 1
+Y_FRAME_SIZE = 640
+X_FRAME_SIZE = 480
+CUDA = 1
 
 # !!! Won't doing a sum using that method cause the initial centers to 
 # !!! closer to 0 and not an accurate representation of where the 
@@ -62,12 +60,16 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
   loc = (0, 0)
   loc_filt = (0,0)
   results = model.track(frame, persist=True)
-  boxes = results[0].boxes.xyxy
+  if(CUDA):  boxes = results[0].boxes.xyxy
+  else: boxes = results[0].boxes.xyxy.cpu() # CPU tests
 
   if results[0].boxes.id is not None:
-    clss = results[0].boxes.cls.tolist()
-    track_ids = results[0].boxes.id.int().tolist()
-
+    if(CUDA): 
+      clss = results[0].boxes.cls.tolist()
+      track_ids = results[0].boxes.id.int().tolist()
+    else:
+      clss = results[0].boxes.cls.cpu().tolist()             # CPU test
+      track_ids = results[0].boxes.id.int().cpu().tolist()   # CPU test
 
     annotator = Annotator(frame, line_width=2)
 
@@ -104,23 +106,28 @@ def main():
   #kd=0.15 seems to be te upper bound. 0.09 seems good
 
   #defining motor speed
-  speedy = 0
-  speedx = 0
-  accel_x = 0
-  accel_y = 0
+  motor_speedy = 0
+  motor_speedx = 0
+  motor_accelx = 0
+  motor_accely = 0
   delta_t = 0
-  delta_frame = 0
+
+  #defining variables to predict location
+  t_delay = 0.4
+  prevx = 0
+  prevy = 0
+  velx = 0
+  vely = 0
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
   trip_init_guess = 0
-  speedy_init_guess = 0 #initial guess for y motor speed - only given once when changing to automatic mode for the first time
+  motor_speedy_init_guess = 0 #initial guess for y motor speed - only given once when changing to automatic mode for the first time
 
   #defining max motor speeds NOT IMPLEMENTED
   max_speed = 90 #should be 50ish
   max_accel = 180 #should be 60ish
 
   prev_time = time.time() #used to find time step
-  prev_frame_time = time.time()
 
   #defining state variable: 0 indicating manual mode with no pid, 1 automatic tracking with ml and pid
   sys_state = 0
@@ -129,61 +136,50 @@ def main():
   names = model.model.names
 
   cap = cv2.VideoCapture(DEVICE_NUMBER)
-  cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
-  cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
+  # cap.set(cv2.CAP_PROP_FRAME_WIDTH, X_FRAME_SIZE)
+  # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
   
 
   w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
   result = cv2.VideoWriter("object_tracking.avi",
-                       cv2.VideoWriter_fourcc(*'MJPG'),
+                       cv2.VideoWriter_fourcc(*'mp4v'),
                        fps,
                        (w, h))
-  
-  # assert cap.isOpened(), "Error reading video file"
 
   while 1:
-    totaltime_prev = time.time()
       
     key = cv2.waitKey(1)
 
     if key == ord('q'): #exit if q is pressed
-
       break
 
     if key == ord(' '): #toggle state if space is pressed
       sys_state = (sys_state+1)%2
 
     if key == ord('r'): #reset motor speeds if r is pressed
-      speedx = 0
-      speedy = 0    
+      motor_speedx = 0
+      motor_speedy = 0    
             
     success, frame = cap.read()
     if not success:
       break
-    #frame = cv2.resize(frame, (X_FRAME_SIZE,Y_FRAME_SIZE), interpolation = cv2.INTER_AREA)
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    delta_frame = time.time()-prev_frame_time
     processed_frame, loc_x_y_filt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)
-    prev_frame_time = time.time()
-    print(f"\nX: {10*loc_x_y_filt[0]:.2f} | Y: {10*loc_x_y_filt[1]:.2f} | Time: {1000*delta_frame:.2f}")
-    
-    # Write the annotated frame to the output video
-    result.write(processed_frame)
-    # Display the annotated frame
+    print(f"\nX: {10*loc_x_y_filt[0]:.2f} | Y: {10*loc_x_y_filt[1]:.2f} | Time: {1000*delta_t:.2f}")
     cv2.imshow("Webcam", processed_frame)
     
     if(sys_state==0): #keyboard control when in manual mode
-      accel_x = 0
-      accel_y = 0
+      motor_accelx = 0
+      motor_accely = 0
 
-      if key == ord('w'): #THESE WILL DEPEND ON ORIENTATION OF AXES, UNTESTED
-        speedy += 5
+      if key == ord('w'):
+        motor_speedy += 5
       elif key == ord('s'):
-        speedy -= 5
+        motor_speedy -= 5
       elif key == ord('a'):
-        speedx -= 5
+        motor_speedx -= 5
       elif key == ord('d'):
-        speedx += 5
+        motor_speedx += 5
 
   
       delta_t = time.time()-prev_time
@@ -193,41 +189,45 @@ def main():
      
       #giving intial guess if first time going to automatic state
       if(trip_init_guess==0):
-        #speedy = 0
-        speedy = speedy_init_guess
+        #motor_speedy = 0
+        motor_speedy = motor_speedy_init_guess
         trip_init_guess += 1
 
-      #getting motor accelerations
-      accel_x = pidx(loc_x_y_filt[0])
-      accel_y = -pidy(loc_x_y_filt[1])
+      #getting motor accelerations using predicted location
+      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
+      motor_accely = -pidy(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+
+      #updating previous locations
+      prevx = loc_x_y_filt[0]
+      prevy = loc_x_y_filt[1]
+
       #updating speeds
       delta_t = time.time()-prev_time
-      speedx += accel_x * delta_t
-      speedy += accel_y * delta_t
+      motor_speedx += motor_accelx * delta_t
+      motor_speedy += motor_accely * delta_t
       prev_time = time.time()
 
-    if(SERIAL):
-      # serial - sending speeds to arduino
-      ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-      #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
-      ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
-      ser.flushInput()
-      ser.flushOutput()
+    motor_speedx=0
+    # serial - sending speeds to arduino
+    ser.write(f'{motor_speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
+    ser.write(f'{motor_speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
+    ser.flushInput()
+    ser.flushOutput()
 
-    print(f'\n State: {sys_state} | Speedx: {speedx:.2f} | Speedy: {speedy:.2f} | Accelx: {accel_x:.2f} | Accely: {accel_y:.2f} | Time Delta {delta_t:.2f}')
+    print(f'\n State: {sys_state} | motor_speedx: {motor_speedx:.2f} | motor_speedy: {motor_speedy:.2f} | Accelx: {motor_accelx:.2f} | Accely: {motor_accely:.2f} | Time Delta {delta_t:.2f}')
     # read key press
-
+    result.write(frame) 
 
   #setting motors to zero wen we sut off
-  speedx=0
-  speedy=0
-  if(SERIAL):
-    # serial - sending speeds to arduino
-    ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
-    ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
-    ser.flushInput()
-    ser.flushOutput()  
+  motor_speedx=0
+  motor_speedy=0
+  
+  # serial - sending speeds to arduino
+  ser.write(f'{motor_speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
+  ser.write(f'{motor_speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
+  ser.flushInput()
+  ser.flushOutput()  
   cap.release()
   cv2.destroyAllWindows()
 
