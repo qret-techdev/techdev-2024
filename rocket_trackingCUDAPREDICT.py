@@ -197,8 +197,13 @@ def main():
         trip_init_guess += 1
 
       #getting motor accelerations using predicted location
+<<<<<<< HEAD
       accel[0] = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
       accel[1] = -pidy(loc_x_y_filt[1] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+=======
+      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
+      motor_accely = -pidy(loc_x_y_filt[1] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+>>>>>>> b91b372d (fixed pidy calculation)
 
       #updating previous locations
       prevx = loc_x_y_filt[0]
