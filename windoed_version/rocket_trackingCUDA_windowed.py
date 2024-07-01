@@ -200,13 +200,6 @@ def main():
       speed[1] += accel[1] * delta_t
       prev_time = time.time()
 
-    # serial - sending speeds to arduino
-    # ser.write(f'{speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    # ser.write(f'{0}\n'.encode())
-    # ser.write(f'{speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HASN'T BEEN TESTED
-    # ser.flushInput()
-    # ser.flushOutput()
-
     print(f'\n State: {sys_state} | Speedx: {speed[0]:.2f} | Speedy: {speed[1]:.2f} | Accelx: {accel[0]:.2f} | Accely: {accel[1]:.2f} | Time Delta {delta_t:.2f}')
     # read key press
     result.write(frame) 

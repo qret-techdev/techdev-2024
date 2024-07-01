@@ -9,22 +9,16 @@ import serial #communication with arduino
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
-"""FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
-  returning the x and y number of pixels from the center of the rocket"""
-
-ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
-
 AVG_NUMBER = 3
 DEVICE_NUMBER = 1
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
 CUDA = 1
+SERIAL = 0
 
-# !!! Won't doing a sum using that method cause the initial centers to 
-# !!! closer to 0 and not an accurate representation of where the 
-# !!! rocket is?
-# The rocket would need to be in frame before launch for atleast 
-# AVG_NUMBER
+if(SERIAL):
+  ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+
 def process_center(loc, mov_avg_x, mov_avg_y):
   loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
         
@@ -60,16 +54,11 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
   loc = (0, 0)
   loc_filt = (0,0)
   results = model.track(frame, persist=True)
-  if(CUDA):  boxes = results[0].boxes.xyxy
-  else: boxes = results[0].boxes.xyxy.cpu() # CPU tests
+  boxes = results[0].boxes.xyxy
 
   if results[0].boxes.id is not None:
-    if(CUDA): 
-      clss = results[0].boxes.cls.tolist()
-      track_ids = results[0].boxes.id.int().tolist()
-    else:
-      clss = results[0].boxes.cls.cpu().tolist()             # CPU test
-      track_ids = results[0].boxes.id.int().cpu().tolist()   # CPU test
+    clss = results[0].boxes.cls.tolist()
+    track_ids = results[0].boxes.id.int().tolist()
 
     annotator = Annotator(frame, line_width=2)
 
@@ -78,7 +67,6 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
 
       track = track_history[track_id]
       loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
-      # print("\nUnprocessed Y: ", loc[1])
       loc_filt = process_center(loc, mov_avg_x,  mov_avg_y)
       track.append((int(loc[0]), int(loc[1])))
       if len(track) > 30:
@@ -106,10 +94,10 @@ def main():
   #kd=0.15 seems to be te upper bound. 0.09 seems good
 
   #defining motor speed
-  motor_speedy = 0
-  motor_speedx = 0
-  motor_accelx = 0
-  motor_accely = 0
+  loc_x_y_filt = [0, 0]
+  speed = [0, 0]
+  accel = [0, 0]
+  delta_t = 0
   delta_t = 0
 
   #defining variables to predict location
@@ -157,8 +145,8 @@ def main():
       sys_state = (sys_state+1)%2
 
     if key == ord('r'): #reset motor speeds if r is pressed
-      motor_speedx = 0
-      motor_speedy = 0    
+      speed[0] = 0
+      speed[1] = 0    
             
     success, frame = cap.read()
     if not success:
@@ -169,17 +157,17 @@ def main():
     cv2.imshow("Webcam", processed_frame)
     
     if(sys_state==0): #keyboard control when in manual mode
-      motor_accelx = 0
-      motor_accely = 0
+      accel[0] = 0
+      accel[1] = 0
 
       if key == ord('w'):
-        motor_speedy += 5
+        speed[1] += 5
       elif key == ord('s'):
-        motor_speedy -= 5
+        speed[0] -= 5
       elif key == ord('a'):
-        motor_speedx -= 5
+        speed[1] -= 5
       elif key == ord('d'):
-        motor_speedx += 5
+        speed[0] += 5
 
   
       delta_t = time.time()-prev_time
@@ -189,13 +177,13 @@ def main():
      
       #giving intial guess if first time going to automatic state
       if(trip_init_guess==0):
-        #motor_speedy = 0
-        motor_speedy = motor_speedy_init_guess
+        #speed[1] = 0
+        speed[1] = motor_speedy_init_guess
         trip_init_guess += 1
 
       #getting motor accelerations using predicted location
-      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
-      motor_accely = -pidy(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+      accel[0] = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
+      accel[1] = -pidy(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
 
       #updating previous locations
       prevx = loc_x_y_filt[0]
@@ -203,31 +191,34 @@ def main():
 
       #updating speeds
       delta_t = time.time()-prev_time
-      motor_speedx += motor_accelx * delta_t
-      motor_speedy += motor_accely * delta_t
+      speed[0] += accel[0] * delta_t
+      speed[1] += accel[1] * delta_t
       prev_time = time.time()
 
-    motor_speedx=0
+    speed[0]=0
     # serial - sending speeds to arduino
-    ser.write(f'{motor_speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-    #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
-    ser.write(f'{motor_speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
-    ser.flushInput()
-    ser.flushOutput()
+    if(SERIAL):
+      ser.write(f'{speed[0]:.2f}\n'.encode()) #\n is absolutely necessary!!!
+      #ser.write(f'{0}\n'.encode()) #tis didn't let te x work
+      ser.write(f'{speed[1]:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
+      ser.flushInput()
+      ser.flushOutput()
 
-    print(f'\n State: {sys_state} | motor_speedx: {motor_speedx:.2f} | motor_speedy: {motor_speedy:.2f} | Accelx: {motor_accelx:.2f} | Accely: {motor_accely:.2f} | Time Delta {delta_t:.2f}')
+    print(f'\n State: {sys_state} | motor_speedx: {speed[0]:.2f} | motor_speedy: {speed[1]:.2f} | Accelx: {accel[0]:.2f} | Accely: {accel[1]:.2f} | Time Delta {delta_t:.2f}')
     # read key press
     result.write(frame) 
 
   #setting motors to zero wen we sut off
-  motor_speedx=0
-  motor_speedy=0
+  speed[0]=0
+  speed[1]=0
   
   # serial - sending speeds to arduino
-  ser.write(f'{motor_speedx:.2f}\n'.encode()) #\n is absolutely necessary!!!
-  ser.write(f'{motor_speedy:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
-  ser.flushInput()
-  ser.flushOutput()  
+  if(SERIAL):
+    ser.write(f'{speed[0]:.2f}\n'.encode()) #\n is absolutely necessary!!!
+    ser.write(f'{speed[1]:.2f}\n'.encode()) #ON ARDUINO SIDE NEEDS TO HAVE SPACE BETWEEN, HAS BEEN TESTED
+    ser.flushInput()
+    ser.flushOutput()  
+    
   cap.release()
   cv2.destroyAllWindows()
 
