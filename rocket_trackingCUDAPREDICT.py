@@ -183,7 +183,7 @@ def main():
 
       #getting motor accelerations using predicted location
       accel[0] = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
-      accel[1] = -pidy(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+      accel[1] = -pidy(loc_x_y_filt[1] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
 
       #updating previous locations
       prevx = loc_x_y_filt[0]
