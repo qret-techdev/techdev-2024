@@ -9,10 +9,7 @@ import serial #communication with arduino
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
-"""FOR NOW: ignoring video capture, not sure what it will be handled by. mock functions get_rock_x/y are pseudo and designed around 
-  returning the x and y number of pixels from the center of the rocket"""
-
-ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+ser = serial.Serial('COM3', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 AVG_NUMBER = 3
 DEVICE_NUMBER = 1
@@ -102,7 +99,7 @@ def main():
   #AXES: y represents moving the camera 'up and down', x is rotating the entire setup
   #defining pid system, first three are pid constants
   pidx = PID(0.047, 0.0011, 0.10, setpoint=0)
-  pidy = PID(0.0444, 0, 0, setpoint=0)
+  pidy = PID(0.015, 0.00002, 0.0125, setpoint=0)
   #kd=0.15 seems to be te upper bound. 0.09 seems good
 
   #defining motor speed
@@ -113,15 +110,17 @@ def main():
   delta_t = 0
 
   #defining variables to predict location
-  t_delay = 0.4
+  t_delay = 0.35
   prevx = 0
   prevy = 0
-  velx = 0
-  vely = 0
+  prevvelx = 0
+  prevvey = 0 #we should make vectors for these at some point lol
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
+  rocket_vel = 30 #rocket velocity off rail in m/s
+  rocket_distance = 100 #distance to launch rail in m
   trip_init_guess = 0
-  motor_speedy_init_guess = 0 #initial guess for y motor speed - only given once when changing to automatic mode for the first time
+  motor_speedy_init_guess = rocket_vel/rocket_distance #initial guess for y motor speed - only given once when changing to automatic mode for the first time
 
   #defining max motor speeds NOT IMPLEMENTED
   max_speed = 90 #should be 50ish
@@ -156,6 +155,10 @@ def main():
     if key == ord(' '): #toggle state if space is pressed
       sys_state = (sys_state+1)%2
 
+      #reset pid when switching states
+      pidx.reset()
+      pidy.reset()
+
     if key == ord('r'): #reset motor speeds if r is pressed
       motor_speedx = 0
       motor_speedy = 0    
@@ -173,9 +176,9 @@ def main():
       motor_accely = 0
 
       if key == ord('w'):
-        motor_speedy += 5
+        motor_speedy += 2
       elif key == ord('s'):
-        motor_speedy -= 5
+        motor_speedy -= 2
       elif key == ord('a'):
         motor_speedx -= 5
       elif key == ord('d'):
@@ -194,12 +197,22 @@ def main():
         trip_init_guess += 1
 
       #getting motor accelerations using predicted location
-      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*(loc_x_y_filt[0]-prevx)/delta_t)
-      motor_accely = -pidy(loc_x_y_filt[1] + t_delay*(loc_x_y_filt[1]-prevy)/delta_t)
+      # x = x0 + vt + 1/2at^2
+      velx = (loc_x_y_filt[0]-prevx)/delta_t
+      vely = (loc_x_y_filt[1]-prevy)/delta_t
+
+      accelx = (velx - prevvelx)/delta_t
+      accely = (vely - prevvely)/delta_t
+
+      motor_accelx = pidx(loc_x_y_filt[0] + t_delay*velx + 0.5*accelx*(t_delay**2))
+      motor_accely = -pidy(loc_x_y_filt[1] + t_delay*vely + 0.5*accely*(t_delay**2))
 
       #updating previous locations
       prevx = loc_x_y_filt[0]
       prevy = loc_x_y_filt[1]
+
+      prevvelx = velx
+      prevvely = vely
 
       #updating speeds
       delta_t = time.time()-prev_time
@@ -229,6 +242,7 @@ def main():
   ser.flushInput()
   ser.flushOutput()  
   cap.release()
+  result.release()
   cv2.destroyAllWindows()
 
 if __name__ == "__main__":
