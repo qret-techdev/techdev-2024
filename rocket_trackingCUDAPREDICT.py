@@ -6,6 +6,8 @@ from simple_pid import PID #control system pid
 import time #measure time, calculate speed from accel and delta t
 import serial #communication with arduino
 
+import datetime
+
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
@@ -202,6 +204,7 @@ def main():
     print(f"\nX: {10*loc_x_y_filt[0]:.2f} | Y: {10*loc_x_y_filt[1]:.2f} | Time: {1000*delta_t:.2f}")
     result.write(processed_frame) 
     cv2.imshow("Webcam", processed_frame)
+    result.write(processed_frame) 
     
     if(sys_state==0): #keyboard control when in manual mode
       accel[0] = 0
@@ -280,7 +283,12 @@ def main():
       ser.flushInput()
       ser.flushOutput()
 
+<<<<<<< HEAD
     print(f'\n State: {sys_state} | motor_speedx: {speed[0]:.2f} | motor_speedy: {speed[1]:.2f} | Accelx: {accel[0]:.2f} | Accely: {accel[1]:.2f} | Time Delta {delta_t:.2f}')
+=======
+    print(f'\n State: {sys_state} | motor_speedx: {motor_speedx:.2f} | motor_speedy: {motor_speedy:.2f} | Accelx: {motor_accelx:.2f} | Accely: {motor_accely:.2f} | Time Delta {delta_t:.2f}')
+    
+>>>>>>> 94e21954 (fixed output video,)
 
   #setting motors to zero wen we sut off
   speed[0]=0
