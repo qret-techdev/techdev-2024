@@ -17,7 +17,6 @@ AVG_NUMBER = 3
 DEVICE_NUMBER = 1
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
-CUDA = 1
 
 # !!! Won't doing a sum using that method cause the initial centers to 
 # !!! closer to 0 and not an accurate representation of where the 
