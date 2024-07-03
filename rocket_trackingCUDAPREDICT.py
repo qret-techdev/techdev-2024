@@ -35,21 +35,32 @@ if(SERIAL):
 
 def process_center(loc, mov_avg_x, mov_avg_y):
   loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
-        
-  #rolling the moving average arrray to get rid of first value
-  mov_avg_x = np.roll(mov_avg_x, -1)
-  mov_avg_y = np.roll(mov_avg_y, -1)
 
-  #replacing oldest value (moved to end with roll) with the newest
-  mov_avg_x[-1] = loc_rel[0]
-  mov_avg_y[-1] = -loc_rel[1]
+  #checking if all elements in both moving average filters is zero
+  if np.all(np.append(mov_avg_x,mov_avg_y) == 0):
+    
+    #filling moving average arrays with first value
+    mov_avg_x = loc_rel[0] * np.ones(AVG_NUMBER)
+    mov_avg_y = -loc_rel[1] * np.ones(AVG_NUMBER)
+    
+    #returning first value
+    return (loc_rel[0], -loc_rel[1])
 
-  #averaging the array
-  rock_x_filt = (sum(mov_avg_x))/AVG_NUMBER
-  rock_y_filt = (sum(mov_avg_y))/AVG_NUMBER
+  else:
+    #rolling the moving average arrray to get rid of first value
+    mov_avg_x = np.roll(mov_avg_x, -1)
+    mov_avg_y = np.roll(mov_avg_y, -1)
 
-  print(rock_x_filt, rock_y_filt)
-  return (rock_x_filt, rock_y_filt)
+    #replacing oldest value (moved to end with roll) with the newest
+    mov_avg_x[-1] = loc_rel[0]
+    mov_avg_y[-1] = -loc_rel[1]
+
+    #averaging the array
+    rock_x_filt = (sum(mov_avg_x))/AVG_NUMBER
+    rock_y_filt = (sum(mov_avg_y))/AVG_NUMBER
+
+    print(rock_x_filt, rock_y_filt)
+    return (rock_x_filt, rock_y_filt)
 
 
 def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, confidence_threshold=0.2):
@@ -140,7 +151,7 @@ def main():
   prevx = 0
   prevy = 0
   prevvelx = 0
-  prevvey = 0 #we should make vectors for these at some point lol
+  prevvely = 0 #we should make vectors for these at some point lol
 
   #defining tripwire for giving initial vertical motor speed - should only happen once!
   rocket_vel = 30 #rocket velocity off rail in m/s
