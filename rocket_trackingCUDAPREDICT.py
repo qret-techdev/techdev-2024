@@ -10,7 +10,7 @@ from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
 AVG_NUMBER = 3
-DEVICE_NUMBER = 1
+DEVICE_NUMBER = 0
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
 CUDA = 1
@@ -38,45 +38,50 @@ def process_center(loc, mov_avg_x, mov_avg_y):
   return (rock_x_filt, rock_y_filt)
 
 
-def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y):
-  """
-  Process a single frame for object detection and tracking.
+def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, confidence_threshold=0.2):
+    """
+    Process a single frame for object detection and tracking.
 
-  Parameters:
-  - frame: The current video frame to process.
-  - model: The YOLO model used for object detection.
-  - track_history: A dictionary maintaining track history for each detected object.
-  - names: Class names for detected objects.
+    Parameters:
+    - frame: The current video frame to process.
+    - model: The YOLO model used for object detection.
+    - track_history: A dictionary maintaining track history for each detected object.
+    - names: Class names for detected objects.
+    - confidence_threshold: Minimum confidence level required to process a detection.
 
-  Returns:
-  - frame: The processed frame with annotations.
-  """
-  loc = (0, 0)
-  loc_filt = (0,0)
-  results = model.track(frame, persist=True)
-  boxes = results[0].boxes.xyxy
+    Returns:
+    - frame: The processed frame with annotations.
+    - loc_filt: Filtered location coordinates.
+    """
+    loc = (0, 0)
+    loc_filt = (0, 0)
+    results = model.track(frame, persist=True)
+    boxes = results[0].boxes.xyxy
+    confs = results[0].boxes.conf
 
-  if results[0].boxes.id is not None:
-    clss = results[0].boxes.cls.tolist()
-    track_ids = results[0].boxes.id.int().tolist()
+    if results[0].boxes.id is not None:
+        clss = results[0].boxes.cls.tolist()
+        track_ids = results[0].boxes.id.int().tolist()
 
-    annotator = Annotator(frame, line_width=2)
+        annotator = Annotator(frame, line_width=2)
 
-    for box, cls, track_id in zip(boxes, clss, track_ids):
-      annotator.box_label(box, color=colors(int(cls), True), label=names[int(cls)])
+        for box, cls, track_id, conf in zip(boxes, clss, track_ids, confs):
+            if conf >= confidence_threshold:
+                annotator.box_label(box, color=colors(int(cls), True), label=f"{names[int(cls)]} {conf:.2f}")
 
-      track = track_history[track_id]
-      loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
-      loc_filt = process_center(loc, mov_avg_x,  mov_avg_y)
-      track.append((int(loc[0]), int(loc[1])))
-      if len(track) > 30:
-        track.pop(0)
-        
-      points = np.array(track, dtype=np.int32).reshape((-1, 1, 2))
-      cv2.circle(frame, track[-1], 7, colors(int(cls), True), -1)
-      cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
-            
-  return frame, loc_filt
+                track = track_history[track_id]
+                loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
+                loc_filt = process_center(loc, mov_avg_x, mov_avg_y)
+                track.append((int(loc[0]), int(loc[1])))
+                if len(track) > 30:
+                    track.pop(0)
+
+                points = np.array(track, dtype=np.int32).reshape((-1, 1, 2))
+                cv2.circle(frame, track[-1], 7, colors(int(cls), True), -1)
+                cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
+
+    return frame, loc_filt
+
 
 def main():
   """
