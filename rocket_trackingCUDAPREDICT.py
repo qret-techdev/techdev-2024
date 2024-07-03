@@ -80,6 +80,7 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, conf
         for box, cls, track_id, conf in zip(boxes, clss, track_ids, confs):
             if conf >= confidence_threshold:
                 annotator.box_label(box, color=colors(int(cls), True), label=f"{names[int(cls)]} {conf:.2f}")
+<<<<<<< HEAD
 
                 track = track_history[track_id]
                 loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
@@ -94,6 +95,21 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, conf
 
     return frame, loc_filt
 
+=======
+
+                track = track_history[track_id]
+                loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
+                loc_filt = process_center(loc, mov_avg_x, mov_avg_y)
+                track.append((int(loc[0]), int(loc[1])))
+                if len(track) > 30:
+                    track.pop(0)
+
+                points = np.array(track, dtype=np.int32).reshape((-1, 1, 2))
+                cv2.circle(frame, track[-1], 7, colors(int(cls), True), -1)
+                cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
+
+    return frame, loc_filt
+>>>>>>> 02d0a53c (added confidence masking to process_frame())
 
 def main():
   """
