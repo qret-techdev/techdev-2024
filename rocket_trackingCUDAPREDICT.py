@@ -27,11 +27,14 @@ AVG_NUMBER = 3
 DEVICE_NUMBER = 0
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
+<<<<<<< HEAD
 CUDA = 1
 SERIAL = 0
 
 if(SERIAL):
   ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+=======
+>>>>>>> ecc9fe37 (removed CUDA constant)
 
 def process_center(loc, mov_avg_x, mov_avg_y):
   loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
