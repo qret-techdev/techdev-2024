@@ -6,6 +6,8 @@ from simple_pid import PID #control system pid
 import time #measure time, calculate speed from accel and delta t
 import serial #communication with arduino
 
+import datetime
+
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 
@@ -137,11 +139,18 @@ def main():
   # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, Y_FRAME_SIZE)
   
 
+  # Define the codec and create VideoWriter object
+  fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for mp4
   w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
-  result = cv2.VideoWriter("object_tracking.avi",
-                       cv2.VideoWriter_fourcc(*'mp4v'),
-                       fps,
-                       (w, h))
+
+  # Generate a unique filename using the current timestamp
+  timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+  filename = f"output_video/output_{timestamp}.mp4"
+
+  result = cv2.VideoWriter(filename,            # File name, 
+                      fourcc,                       # codec,
+                      fps,                          # fps, 
+                      (X_FRAME_SIZE, Y_FRAME_SIZE)) # frame size
 
   while 1:
       
@@ -168,6 +177,7 @@ def main():
     processed_frame, loc_x_y_filt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)
     print(f"\nX: {10*loc_x_y_filt[0]:.2f} | Y: {10*loc_x_y_filt[1]:.2f} | Time: {1000*delta_t:.2f}")
     cv2.imshow("Webcam", processed_frame)
+    result.write(processed_frame) 
     
     if(sys_state==0): #keyboard control when in manual mode
       motor_accelx = 0
@@ -227,8 +237,7 @@ def main():
     ser.flushOutput()
 
     print(f'\n State: {sys_state} | motor_speedx: {motor_speedx:.2f} | motor_speedy: {motor_speedy:.2f} | Accelx: {motor_accelx:.2f} | Accely: {motor_accely:.2f} | Time Delta {delta_t:.2f}')
-    # read key press
-    result.write(frame) 
+    
 
   #setting motors to zero wen we sut off
   motor_speedx=0
