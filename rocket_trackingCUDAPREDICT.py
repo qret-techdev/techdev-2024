@@ -171,7 +171,7 @@ def main():
   #defining state variable: 0 indicating manual mode with no pid, 1 automatic tracking with ml and pid
   sys_state = 0
   track_history = defaultdict(lambda: [])
-  model = YOLO("best.pt")
+  model = YOLO("weights/best.pt")
   names = model.model.names
 
   cap = cv2.VideoCapture(DEVICE_NUMBER)
