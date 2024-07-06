@@ -12,7 +12,7 @@ from ultralytics.utils.plotting import Annotator, colors
 
 import datetime
 
-AVG_NUMBER = 3
+AVG_NUMBER = 1
 DEVICE_NUMBER = 0
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
@@ -27,26 +27,61 @@ if(KALMAN):
   n_trackables = 1
   ekf = kf.ExampleEKF(n_trackables)
 
-
 def initialize_mov_avg(size):
+    """Parameters:
+      - size: The size of the moving average arrays.
+      Returns:
+      - Two zero-initialized numpy arrays of the given size."""
     return np.zeros(size), np.zeros(size)
-#    pidx, pidy
+
 def initialize_pid():
+    """Returns:
+      - Two PID controllers with predefined parameters and setpoints."""
     return PID(0.047, 0.0011, 0.10, setpoint=0), PID(0.0444, 0, 0, setpoint=0)
-#   speed, accel, loc_x_y_filt, delta_t, prev_time
+
 def initialize_motor_variables():
+    """Returns:
+      - speed: A list with initial speed values.
+      - accel: A list with initial acceleration values.
+      - loc_x_y_filt: A list with initial filtered location values.
+      - delta_t: Initial time delta.
+      - prev_time: Initial previous time.   """
     return [0, 0], [0, 0], [0, 0], [0, 0], 0, 0
-#   t_delay, prevx, prevy, velx, vely, trip_init_guess, motor_speedy_init_guess
+
 def initialize_tracking_variables():
+    """Returns:
+      - t_delay: Initial time delay.
+      - prevx: Initial previous x-coordinate.
+      - prevy: Initial previous y-coordinate.
+      - velx: Initial velocity in x direction.
+      - vely: Initial velocity in y direction.
+      - trip_init_guess: Initial trip guess.
+      - motor_speedy_init_guess: Initial motor speed guess."""
     return 0.4, 0, 0, 0, 0, 0, 0
 
 def initialize_video_writer(cap, width, height, fps):
+    """Parameters:
+      - cap: Video capture object.
+      - width: Width of the video frame.
+      - height: Height of the video frame.
+      - fps: Frames per second for the output video.
+      Returns:
+      - VideoWriter object for saving videos."""
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"output_video/output_{timestamp}.mp4"
     return cv2.VideoWriter(filename, fourcc, fps, (width, height))
 
 def update_speed_and_time(speed, accel, delta_t, prev_time):
+    """Parameters:
+      - speed: Current speed values.
+      - accel: Acceleration values.
+      - delta_t: Time delta.
+      - prev_time: Previous timestamp.
+      Returns:
+      - Updated speed values.
+      - Updated time delta.
+      - Updated previous timestamp."""
     delta_t = time.time() - prev_time
     speed[0] += accel[0] * delta_t
     speed[1] += accel[1] * delta_t
@@ -54,45 +89,46 @@ def update_speed_and_time(speed, accel, delta_t, prev_time):
     return speed, delta_t, prev_time
 
 def send_speed_to_arduino(speed):
+    """Send speed values to the Arduino.
+      Parameters:
+      - speed: Current speed values to send."""
     ser.write(f'{speed[0]:.2f}\n'.encode())
     ser.write(f'{speed[1]:.2f}\n'.encode())
     ser.flushInput()
     ser.flushOutput()
 
 def process_center(loc, mov_avg_x, mov_avg_y):
-  loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
-        
-  #rolling the moving average arrray to get rid of first value
-  mov_avg_x = np.roll(mov_avg_x, -1)
-  mov_avg_y = np.roll(mov_avg_y, -1)
+    """Process the center location for moving average filtering.
+      Parameters:
+      - loc: Current location.
+      - mov_avg_x: Moving average array for x coordinates.
+      - mov_avg_y: Moving average array for y coordinates.
+      Returns:
+      - Filtered x and y coordinates."""
+    loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
+    mov_avg_x = np.roll(mov_avg_x, -1)
+    mov_avg_y = np.roll(mov_avg_y, -1)
+    
+    mov_avg_x[-1] = loc_rel[0]
+    mov_avg_y[-1] = -loc_rel[1]
 
-  #replacing oldest value (moved to end with roll) with the newest
-  mov_avg_x[-1] = loc_rel[0]
-  mov_avg_y[-1] = -loc_rel[1]
+    rock_x_filt = (sum(mov_avg_x)) / AVG_NUMBER
+    rock_y_filt = (sum(mov_avg_y)) / AVG_NUMBER
 
-  #averaging the array
-  rock_x_filt = (sum(mov_avg_x))/AVG_NUMBER
-  rock_y_filt = (sum(mov_avg_y))/AVG_NUMBER
+    print(rock_x_filt, rock_y_filt)
+    return (rock_x_filt, rock_y_filt)
 
-  print(rock_x_filt, rock_y_filt)
-  return (rock_x_filt, rock_y_filt)
-
-
-def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, confidence_threshold=0.2):
-    """
-    Process a single frame for object detection and tracking.
-
-    Parameters:
-    - frame: The current video frame to process.
-    - model: The YOLO model used for object detection.
-    - track_history: A dictionary maintaining track history for each detected object.
-    - names: Class names for detected objects.
-    - confidence_threshold: Minimum confidence level required to process a detection.
-
-    Returns:
-    - frame: The processed frame with annotations.
-    - loc_filt: Filtered location coordinates.
-    """
+def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, confidence_threshold=0.6):
+    """Process a single frame for object detection and tracking.
+      Parameters:
+      - frame: The current video frame to process.
+      - model: The YOLO model used for object detection.
+      - track_history: A dictionary maintaining track history for each detected object.
+      - names: Class names for detected objects.
+      - confidence_threshold: Minimum confidence level required to process a detection.
+      Returns:
+      - frame: The processed frame with annotations.
+      - loc_filt: Filtered location coordinates."""
     loc = (0, 0)
     loc_filt = (0, 0)
     results = model.track(frame, persist=True)
@@ -118,10 +154,8 @@ def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, conf
                 cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
 
     return frame, loc_filt
-  
 
 def main():
-    AVG_NUMBER = 10
     mov_avg_x, mov_avg_y = initialize_mov_avg(AVG_NUMBER)
     pidx, pidy = initialize_pid()
     speed, accel, loc_x_y_unfilt, loc_x_y_filt, delta_t, prev_time = initialize_motor_variables()
