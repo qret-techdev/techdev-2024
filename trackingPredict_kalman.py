@@ -116,7 +116,11 @@ def process_center(loc, mov_avg_x, mov_avg_y):
     return (rock_x_filt, rock_y_filt)
 
 def kalman_filter(loc_x_y_unfilt):
+<<<<<<< HEAD
     observations = np.array([2*loc_x_y_unfilt[0], 2*loc_x_y_unfilt[1]]).reshape(n_trackables, 2, 1)
+=======
+    observations = np.array(loc_x_y_unfilt).reshape(n_trackables, 2, 1)
+>>>>>>> 84107c34 (abstracted the kalman filter calculation)
     ekf.predict()
     ekf.update(observations)
     return ekf.m[:, :, 0].flatten()
@@ -196,7 +200,11 @@ def main():
             loc_x_y_filt = kalman_filter(loc_x_y_unfilt)
         else:
             loc_x_y_filt = loc_x_y_unfilt
+<<<<<<< HEAD
         print(loc_x_y_filt[0], loc_x_y_filt[1])
+=======
+        print(loc_x_y_filt[0]*2, loc_x_y_filt[1]*2)
+>>>>>>> 84107c34 (abstracted the kalman filter calculation)
         cv2.imshow("Webcam", frame)
         result.write(frame)
 
