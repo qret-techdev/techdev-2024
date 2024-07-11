@@ -17,6 +17,7 @@ AVG_NUMBER = 3
 DEVICE_NUMBER = 0
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
+SERIAL = 1
 
 def process_center(loc, mov_avg_x, mov_avg_y):
   loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
