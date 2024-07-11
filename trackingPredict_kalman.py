@@ -89,9 +89,6 @@ def update_speed_and_time(speed, accel, delta_t, prev_time):
     return speed, delta_t, prev_time
 
 def send_speed_to_arduino(speed):
-    """Send speed values to the Arduino.
-      Parameters:
-      - speed: Current speed values to send."""
     ser.write(f'{speed[0]:.2f}\n'.encode())
     ser.write(f'{speed[1]:.2f}\n'.encode())
     ser.flushInput()
@@ -117,6 +114,12 @@ def process_center(loc, mov_avg_x, mov_avg_y):
 
     print(rock_x_filt, rock_y_filt)
     return (rock_x_filt, rock_y_filt)
+
+def kalman_filter(loc_x_y_unfilt):
+    observations = np.array(loc_x_y_unfilt).reshape(n_trackables, 2, 1)
+    ekf.predict()
+    ekf.update(observations)
+    return ekf.m[:, :, 0].flatten()
 
 def process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y, confidence_threshold=0.6):
     """Process a single frame for object detection and tracking.
@@ -186,12 +189,10 @@ def main():
         frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         loc_x_y_unfilt = process_frame(frame, model, track_history, names, mov_avg_x, mov_avg_y)[1]
         if KALMAN:
-            observations = np.array(loc_x_y_unfilt).reshape(n_trackables, 2, 1)
-            ekf.predict()
-            ekf.update(observations)
-            loc_x_y_filt = ekf.m[:, :, 0].flatten()
+            loc_x_y_filt = kalman_filter(loc_x_y_unfilt)
         else:
             loc_x_y_filt = loc_x_y_unfilt
+        print(loc_x_y_filt[0], loc_x_y_filt[1])
         cv2.imshow("Webcam", frame)
         result.write(frame)
 
