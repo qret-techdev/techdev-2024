@@ -116,7 +116,7 @@ def process_center(loc, mov_avg_x, mov_avg_y):
     return (rock_x_filt, rock_y_filt)
 
 def kalman_filter(loc_x_y_unfilt):
-    observations = np.array(loc_x_y_unfilt).reshape(n_trackables, 2, 1)
+    observations = np.array([2*loc_x_y_unfilt[0], 2*loc_x_y_unfilt[1]]).reshape(n_trackables, 2, 1)
     ekf.predict()
     ekf.update(observations)
     return ekf.m[:, :, 0].flatten()
