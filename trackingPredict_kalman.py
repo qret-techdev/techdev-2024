@@ -13,10 +13,10 @@ from ultralytics.utils.plotting import Annotator, colors
 import datetime
 
 AVG_NUMBER = 1
-DEVICE_NUMBER = 0
+DEVICE_NUMBER = 1
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
-SERIAL = 0
+SERIAL = 1
 KALMAN = 1
 WEIGHTS = "weights/best.pt"
 
