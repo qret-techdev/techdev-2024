@@ -37,7 +37,7 @@ def initialize_mov_avg(size):
 def initialize_pid():
     """Returns:
       - Two PID controllers with predefined parameters and setpoints."""
-    return PID(0.042, 0.019, 0.0055, setpoint=0), PID(0.0015, 0.00002, 0.0125, setpoint=0)
+    return PID(0.042, 0.019, 0.0055, setpoint=0), PID(0.015, 0.00002, 0.0125, setpoint=0)
 
 def initialize_motor_variables():
     """Returns:
@@ -116,7 +116,7 @@ def process_center(loc, mov_avg_x, mov_avg_y):
     return (rock_x_filt, rock_y_filt)
 
 def kalman_filter(loc_x_y_unfilt):
-    observations = np.array([2*loc_x_y_unfilt[0], -2*loc_x_y_unfilt[1]]).reshape(n_trackables, 2, 1)
+    observations = np.array([2*loc_x_y_unfilt[0], 2*loc_x_y_unfilt[1]]).reshape(n_trackables, 2, 1)
     ekf.predict()
     ekf.update(observations)
     return ekf.m[:, :, 0].flatten()
@@ -163,8 +163,8 @@ def main():
     pidx, pidy = initialize_pid()
     speed, accel, loc_x_y_unfilt, loc_x_y_filt, delta_t, prev_time = initialize_motor_variables()
     t_delay, prevx, prevy, velx, vely, trip_init_guess, motor_speedy_init_guess = initialize_tracking_variables()
-    max_speed = 90
-    max_accel = 180
+    max_speed = 90 #unused
+    max_accel = 180 #unused
     sys_state = 0
     track_history = defaultdict(lambda: [])
     model = YOLO(WEIGHTS)
@@ -178,9 +178,10 @@ def main():
         if key == ord('q'):
             break
         if key == ord(' '):
+            sys_state = (sys_state + 1) % 2
+
             pidx.reset()
             pidy.reset()
-            sys_state = (sys_state + 1) % 2
             
         if key == ord('r'):
             speed = [0, 0]
