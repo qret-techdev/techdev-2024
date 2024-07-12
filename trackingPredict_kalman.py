@@ -18,10 +18,10 @@ Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
 SERIAL = 1
 KALMAN = 1
-WEIGHTS = "weights/best.pt"
+WEIGHTS = "weights/test(20epoch).pt"
 
 if(SERIAL):
-  ser = serial.Serial('COM5', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
+  ser = serial.Serial('COM3', 115200) #might have to change com number, ex 'COM11'... best to keep a high baud rate, make sure it matches w/ arduino
 
 if(KALMAN):
   n_trackables = 1
@@ -37,7 +37,7 @@ def initialize_mov_avg(size):
 def initialize_pid():
     """Returns:
       - Two PID controllers with predefined parameters and setpoints."""
-    return PID(0.047, 0.0011, 0.10, setpoint=0), PID(0.0444, 0, 0, setpoint=0)
+    return PID(0.042, 0.019, 0.0055, setpoint=0), PID(0.0015, 0.00002, 0.0125, setpoint=0)
 
 def initialize_motor_variables():
     """Returns:
@@ -116,7 +116,7 @@ def process_center(loc, mov_avg_x, mov_avg_y):
     return (rock_x_filt, rock_y_filt)
 
 def kalman_filter(loc_x_y_unfilt):
-    observations = np.array([2*loc_x_y_unfilt[0], 2*loc_x_y_unfilt[1]]).reshape(n_trackables, 2, 1)
+    observations = np.array([2*loc_x_y_unfilt[0], -2*loc_x_y_unfilt[1]]).reshape(n_trackables, 2, 1)
     ekf.predict()
     ekf.update(observations)
     return ekf.m[:, :, 0].flatten()
@@ -178,7 +178,10 @@ def main():
         if key == ord('q'):
             break
         if key == ord(' '):
+            pidx.reset()
+            pidy.reset()
             sys_state = (sys_state + 1) % 2
+            
         if key == ord('r'):
             speed = [0, 0]
 
@@ -199,13 +202,13 @@ def main():
         if sys_state == 0:
             accel = [0, 0]
             if key == ord('w'):
-                speed[1] += 5
+                speed[1] += 2
             elif key == ord('s'):
-                speed[0] -= 5
+                speed[1] -= 2
             elif key == ord('a'):
-                speed[1] -= 5
+                speed[0] += 2
             elif key == ord('d'):
-                speed[0] += 5
+                speed[0] -= 2
             delta_t = time.time() - prev_time
             prev_time = time.time()
 
@@ -217,7 +220,7 @@ def main():
             accel[1] = -pidy(loc_x_y_filt[1] + t_delay * (loc_x_y_filt[1] - prevy) / delta_t)
             prevx, prevy = loc_x_y_filt[0], loc_x_y_filt[1]
             speed, delta_t, prev_time = update_speed_and_time(speed, accel, delta_t, prev_time)
-
+            speed[0] = 0 #disable one axis for testing
         if SERIAL:
             send_speed_to_arduino(speed)
         print(f'\n State: {sys_state} | motor_speedx: {speed[0]:.2f} | motor_speedy: {speed[1]:.2f} | Accelx: {accel[0]:.2f} | Accely: {accel[1]:.2f} | Time Delta {delta_t:.2f}')
