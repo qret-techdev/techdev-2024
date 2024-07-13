@@ -62,9 +62,10 @@ def main():
             tracker.delta_t = time.time() - tracker.prev_time
             tracker.prev_time = time.time()
         elif tracker.sys_state == 1:
-            if tracker.trip_init_guess == 0:
+            if tracker.trip_init_guess:
+                tracker.speed[0] = tracker.motor_speedx_init_guess
                 tracker.speed[1] = tracker.motor_speedy_init_guess
-                tracker.trip_init_guess += 1
+                tracker.trip_init_guess = 0
             tracker.accel[0] = tracker.pidx(tracker.loc_x_y_filt[0] + tracker.t_delay * (tracker.loc_x_y_filt[0] - tracker.prevx) / tracker.delta_t)
             tracker.accel[1] = -tracker.pidy(tracker.loc_x_y_filt[1] + tracker.t_delay * (tracker.loc_x_y_filt[1] - tracker.prevy) / tracker.delta_t)
             tracker.prevx, tracker.prevy = tracker.loc_x_y_filt[0], tracker.loc_x_y_filt[1]

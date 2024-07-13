@@ -32,6 +32,7 @@ class ObjectTracker:
         self.vely = 0
         self.trip_init_guess = 0
         self.motor_speedy_init_guess = 0
+        self.motor_speedx_init_guess = 0
             
     def process_center(self, loc: tuple):
         loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
