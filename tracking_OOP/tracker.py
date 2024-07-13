@@ -33,7 +33,7 @@ class ObjectTracker:
         self.trip_init_guess = 0
         self.motor_speedy_init_guess = 0
         self.motor_speedx_init_guess = 0
-        self.counter = 0
+        self.count = False
         self.box_count = 0
         self.frame_count = 0
             
@@ -51,12 +51,14 @@ class ObjectTracker:
         results = self.model.track(frame, persist=True)
         boxes = results[0].boxes.xyxy
         confs = results[0].boxes.conf
-        self.frame_count += 1
+        if self.count:
+            self.frame_count += 1
         if results[0].boxes.id is not None:
             clss = results[0].boxes.cls.tolist()
             track_ids = results[0].boxes.id.int().tolist()
             annotator = Annotator(frame, line_width=2)
-            self.box_count += 1
+            if self.count:
+                self.box_count += 1
             for box, cls, track_id, conf in zip(boxes, clss, track_ids, confs):
                 if conf >= confidence_threshold:
                     annotator.box_label(box, color=colors(int(cls), True), label=f"{self.model.model.names[int(cls)]} {conf:.2f}")
