@@ -1,0 +1,13 @@
+# Configuration Constants
+AVG_NUMBER = 1
+DEVICE_NUMBER = 0
+Y_FRAME_SIZE = 640
+X_FRAME_SIZE = 480
+SERIAL = 0
+KALMAN = 1
+WEIGHTS = "weights/best.pt"
+SERIAL_PORT = 'COM5'
+SERIAL_BAUDRATE = 115200
+PARAMFILE = 'params.xlsx'
+PIDX = 'pidx'
+PIDY = 'pidy'
