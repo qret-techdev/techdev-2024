@@ -51,6 +51,8 @@ def main():
         result.write(frame)
 
         if tracker.sys_state == 0:
+            tracker.frame_count, tracker.box_count = (0,0)
+            tracker.count = False
             tracker.accel = [0, 0]
             if key == ord('w'):
                 tracker.speed[1] += 5
@@ -63,6 +65,7 @@ def main():
             tracker.delta_t = time.time() - tracker.prev_time
             tracker.prev_time = time.time()
         elif tracker.sys_state == 1:
+            tracker.count = True
             if tracker.trip_init_guess:
                 tracker.speed[0] = tracker.motor_speedx_init_guess
                 tracker.speed[1] = tracker.motor_speedy_init_guess
