@@ -44,8 +44,9 @@ def main():
 
         frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         loc_x_y_unfilt = tracker.process_frame(frame)[1]
+        print(loc_x_y_unfilt[0], loc_x_y_unfilt[1])
         tracker.loc_x_y_filt = kf_manager.apply_filter(loc_x_y_unfilt) if KALMAN else loc_x_y_unfilt
-        print(tracker.loc_x_y_filt[0] * 2, tracker.loc_x_y_filt[1] * 2)
+        print(tracker.loc_x_y_filt[0], tracker.loc_x_y_filt[1])
         cv2.imshow("Webcam", frame)
         result.write(frame)
 
