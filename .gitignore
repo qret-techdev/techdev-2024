@@ -1,3 +1,6 @@
 # ignore ALL files in ANY directory named temp
+<<<<<<< HEAD
 *.mp4
+=======
+>>>>>>> b4a8e289 (Add Ignore PyCache File)
 *.pyc
