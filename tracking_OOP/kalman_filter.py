@@ -45,12 +45,14 @@ class KalmanFilterManager:
         y_lin = observations - simdkalman.primitives.ddot(H, self.m)
         # Update step of EKF
         self.m, self.P = simdkalman.primitives.update(self.m, self.P, H, self.R, y_lin)
-
+                
     def apply_filter(self, loc_x_y_unfilt: tuple):
         """
         Apply the Kalman filter to a new set of observations.
         """
-        observations = np.array(loc_x_y_unfilt).reshape(1, self.OBS_DIM, 1)
+        if loc_x_y_unfilt != (0,0):
+            observations = np.array(loc_x_y_unfilt).reshape(1, self.OBS_DIM, 1)
         self.predict()
-        self.update(observations)
-        return self.m[:, :, 0].flatten()
+        if loc_x_y_unfilt != (0,0):
+            self.update(observations)
+        return self.m[:, :, 0].flatten()*(2, 2)
