@@ -79,7 +79,7 @@ def main():
             serial_comm.send_speed_to_arduino(tracker.speed)
         print(f'\n State: {tracker.sys_state} | motor_speedx: {tracker.speed[0]:.2f} | motor_speedy: {tracker.speed[1]:.2f} | Accelx: {tracker.accel[0]:.2f} | Accely: {tracker.accel[1]:.2f} | Time Delta {tracker.delta_t:.2f}')
 
-    print(f'\n Percentage of Rocket Tracked = %{100*(tracker.box_count/tracker.frame_count):.2f}')
+    print(f'\nPercentage of Rocket Tracked = %{100*(tracker.box_count/tracker.frame_count):.2f} \nTotal Frames = {tracker.frame_count} \nBoundboxes = {tracker.box_count}')
     if SERIAL:
         serial_comm.send_speed_to_arduino([0, 0])
 
