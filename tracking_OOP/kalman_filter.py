@@ -50,9 +50,9 @@ class KalmanFilterManager:
         """
         Apply the Kalman filter to a new set of observations.
         """
-        if loc_x_y_unfilt != (0,0):
-            observations = np.array(loc_x_y_unfilt).reshape(1, self.OBS_DIM, 1)
+        # if loc_x_y_unfilt != (0,0):
+        observations = np.array(loc_x_y_unfilt).reshape(1, self.OBS_DIM, 1)
         self.predict()
-        if loc_x_y_unfilt != (0,0):
-            self.update(observations)
+        # if loc_x_y_unfilt != (0,0):
+        self.update(observations)
         return self.m[:, :, 0].flatten()*(2, 2)
