@@ -24,6 +24,10 @@ def main():
     w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
     result = initialize_video_writer(cap, X_FRAME_SIZE, Y_FRAME_SIZE, fps)
 
+    # Define padding parameters (example: 50 pixels padding on each side)
+    top, bottom, left, right = 0, 0, 80, 80
+    padding_color = [0, 0, 0]  # Padding color (black)
+
     while True:
         key = cv2.waitKey(1)
         if key in [ord('q'), ord(' ')]:
@@ -43,12 +47,16 @@ def main():
             break
 
         frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        loc_x_y_unfilt = tracker.process_frame(frame, CONFIDENCE)[1]
+        
+        # Add padding to the image
+        padded_frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=padding_color)
+        
+        loc_x_y_unfilt = tracker.process_frame(padded_frame, CONFIDENCE)[1]
         print(loc_x_y_unfilt[0], loc_x_y_unfilt[1])
         tracker.loc_x_y_filt = kf_manager.apply_filter(loc_x_y_unfilt) if KALMAN else loc_x_y_unfilt
         print(tracker.loc_x_y_filt[0], tracker.loc_x_y_filt[1])
-        cv2.imshow("Webcam", frame)
-        result.write(frame)
+        cv2.imshow("Webcam", padded_frame)
+        result.write(padded_frame)
 
         if tracker.sys_state == 0:
             tracker.frame_count, tracker.box_count = (0,0)
