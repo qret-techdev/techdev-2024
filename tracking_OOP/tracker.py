@@ -4,7 +4,7 @@ from collections import defaultdict
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors
 from simple_pid import PID
-from config import AVG_NUMBER, X_FRAME_SIZE, Y_FRAME_SIZE, WEIGHTS, PARAMFILE, PIDX, PIDY
+from config import AVG_NUMBER, X_FRAME_SIZE, Y_FRAME_SIZE, WEIGHTS, PARAMFILE, PIDX, PIDY, T_DELAY
 from utils import get_pid_params
 
 class ObjectTracker:
@@ -25,7 +25,7 @@ class ObjectTracker:
         self.sys_state = 0
         self.max_speed = 90
         self.max_accel = 180
-        self.t_delay = 0.4
+        self.t_delay = T_DELAY
         self.prevx = 0
         self.prevy = 0
         self.velx = 0
