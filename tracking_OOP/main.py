@@ -23,7 +23,7 @@ def main():
     result = initialize_video_writer(cap, X_FRAME_SIZE, Y_FRAME_SIZE, fps)
 
     # Define padding parameters (example: 50 pixels padding on each side)
-    top, bottom, left, right = 0, 0, 80, 80
+    top, bottom, left, right = 0, 0, 0 ,0#80, 80
     padding_color = [0, 0, 0]  # Padding color (black)
 
     while True:
@@ -31,12 +31,15 @@ def main():
         if key in [ord('q'), ord(' ')]:
             if key == ord('q'):
                 break
+            tracker.pidx.reset()
+            tracker.pidy.reset()
+            tracker.speed = [0, 0]
             tracker.sys_state = (tracker.sys_state + 1) % 2
         if key == ord('r'):
             tracker.speed = [0, 0]
         if key == ord('t'):
-            tracker.pidy.tunings = get_pid_params(PARAMFILE, PIDX)
-            tracker.pidx.tunings = get_pid_params(PARAMFILE, PIDY)
+            tracker.pidx.tunings = get_pid_params(PARAMFILE, PIDX)
+            tracker.pidy.tunings = get_pid_params(PARAMFILE, PIDY)
             print(tracker.pidx.tunings)
             print(tracker.pidy.tunings)
     
@@ -61,13 +64,13 @@ def main():
             tracker.count = False
             tracker.accel = [0, 0]
             if key == ord('w'):
-                tracker.speed[1] += 5
+                tracker.speed[1] += 3
             elif key == ord('s'):
-                tracker.speed[1] -= 5
+                tracker.speed[1] -= 3
             elif key == ord('a'):
-                tracker.speed[0] -= 5
+                tracker.speed[0] -= 3
             elif key == ord('d'):
-                tracker.speed[0] += 5
+                tracker.speed[0] += 3
             tracker.delta_t = time.time() - tracker.prev_time
             tracker.prev_time = time.time()
             tracker.accel[0] = tracker.pidx(tracker.loc_x_y_filt[0] + tracker.t_delay * (tracker.loc_x_y_filt[0] - tracker.prevx) / tracker.delta_t)
