@@ -13,8 +13,8 @@ def update_speed_and_time(speed, accel, delta_t):
 
 def main():
     tracker = ObjectTracker()
-    print(tracker.pidx.tunings)
-    print(tracker.pidy.tunings)
+    tracker.pidx.tunings = get_pid_params(PARAMFILE, PIDX)
+    tracker.pidy.tunings = get_pid_params(PARAMFILE, PIDY)
     kf_manager =  KalmanFilterManager() if KALMAN else None
     serial_comm = SerialCommunication(SERIAL_PORT, SERIAL_BAUDRATE) if SERIAL else None
 
@@ -40,8 +40,8 @@ def main():
         if key == ord('t'):
             tracker.pidx.tunings = get_pid_params(PARAMFILE, PIDX)
             tracker.pidy.tunings = get_pid_params(PARAMFILE, PIDY)
-            print(tracker.pidx.tunings)
-            print(tracker.pidy.tunings)
+            print(f'x-tuning: {tracker.pidx.tunings}')
+            print(f'y-tuning: {tracker.pidy.tunings}')
     
         success, frame = cap.read()
         if not success:
