@@ -1,14 +1,15 @@
 # Configuration Constants
 AVG_NUMBER = 1
-DEVICE_NUMBER = 0
+DEVICE_NUMBER = 1
 Y_FRAME_SIZE = 640
 X_FRAME_SIZE = 480
 CONFIDENCE = 0.6
-SERIAL = 0
+SERIAL = 1
 KALMAN = 1
-WEIGHTS = "weights\yolov10_07-20-24.pt"
-SERIAL_PORT = 'COM5'
+WEIGHTS = "weights/test(20epoch).pt"
+SERIAL_PORT = 'COM3'
 SERIAL_BAUDRATE = 115200
 PARAMFILE = 'params.xlsx'
 PIDX = 'pidx'
 PIDY = 'pidy'
+T_DELAY=0.40
