@@ -6,17 +6,15 @@ from tracker import ObjectTracker
 from kalman_filter import KalmanFilterManager
 from serial_comm import SerialCommunication
 
-def update_speed_and_time(speed, accel, delta_t, prev_time):
-    delta_t = time.time() - prev_time
+def update_speed_and_time(speed, accel, delta_t):
     speed[0] += accel[0] * delta_t
     speed[1] += accel[1] * delta_t
-    prev_time = time.time()
-    return speed, delta_t, prev_time
+    return speed
 
 def main():
     tracker = ObjectTracker()
-    print(tracker.pidx.tunings)
-    print(tracker.pidy.tunings)
+    print(f'x-tuning: {tracker.pidx.tunings}')
+    print(f'y-tuning: {tracker.pidy.tunings}')
     kf_manager =  KalmanFilterManager() if KALMAN else None
     serial_comm = SerialCommunication(SERIAL_PORT, SERIAL_BAUDRATE) if SERIAL else None
 
@@ -33,14 +31,17 @@ def main():
         if key in [ord('q'), ord(' ')]:
             if key == ord('q'):
                 break
+            tracker.pidx.reset()
+            tracker.pidy.reset()
+            tracker.speed = [0, 0]
             tracker.sys_state = (tracker.sys_state + 1) % 2
         if key == ord('r'):
             tracker.speed = [0, 0]
         if key == ord('t'):
-            tracker.pidy.tunings = get_pid_params(PARAMFILE, PIDX)
-            tracker.pidx.tunings = get_pid_params(PARAMFILE, PIDY)
-            print(tracker.pidx.tunings)
-            print(tracker.pidy.tunings)
+            tracker.pidx.tunings = get_pid_params(PARAMFILE, PIDX)
+            tracker.pidy.tunings = get_pid_params(PARAMFILE, PIDY)
+            print(f'x-tuning: {tracker.pidx.tunings}')
+            print(f'y-tuning: {tracker.pidy.tunings}')
     
         success, frame = cap.read()
         if not success:
@@ -63,15 +64,18 @@ def main():
             tracker.count = False
             tracker.accel = [0, 0]
             if key == ord('w'):
-                tracker.speed[1] += 5
+                tracker.speed[1] += 3
             elif key == ord('s'):
-                tracker.speed[1] -= 5
+                tracker.speed[1] -= 3
             elif key == ord('a'):
-                tracker.speed[0] -= 5
+                tracker.speed[0] -= 3
             elif key == ord('d'):
-                tracker.speed[0] += 5
+                tracker.speed[0] += 3
             tracker.delta_t = time.time() - tracker.prev_time
             tracker.prev_time = time.time()
+            tracker.accel[0] = tracker.pidx(tracker.loc_x_y_filt[0] + tracker.t_delay * (tracker.loc_x_y_filt[0] - tracker.prevx) / tracker.delta_t)
+            tracker.accel[1] = -tracker.pidy(tracker.loc_x_y_filt[1] + tracker.t_delay * (tracker.loc_x_y_filt[1] - tracker.prevy) / tracker.delta_t)
+            tracker.prevx, tracker.prevy = tracker.loc_x_y_filt[0], tracker.loc_x_y_filt[1]
         elif tracker.sys_state == 1:
             tracker.count = True
             if tracker.trip_init_guess:
@@ -81,13 +85,14 @@ def main():
             tracker.accel[0] = tracker.pidx(tracker.loc_x_y_filt[0] + tracker.t_delay * (tracker.loc_x_y_filt[0] - tracker.prevx) / tracker.delta_t)
             tracker.accel[1] = -tracker.pidy(tracker.loc_x_y_filt[1] + tracker.t_delay * (tracker.loc_x_y_filt[1] - tracker.prevy) / tracker.delta_t)
             tracker.prevx, tracker.prevy = tracker.loc_x_y_filt[0], tracker.loc_x_y_filt[1]
-            tracker.speed, tracker.delta_t, tracker.prev_time = update_speed_and_time(tracker.speed, tracker.accel, tracker.delta_t, tracker.prev_time)
-
+            tracker.delta_t = time.time() - tracker.prev_time
+            tracker.prev_time = time.time()
+            tracker.speed = update_speed_and_time(tracker.speed, tracker.accel, tracker.delta_t)
         if SERIAL:
             serial_comm.send_speed_to_arduino(tracker.speed)
         print(f'\n State: {tracker.sys_state} | motor_speedx: {tracker.speed[0]:.2f} | motor_speedy: {tracker.speed[1]:.2f} | Accelx: {tracker.accel[0]:.2f} | Accely: {tracker.accel[1]:.2f} | Time Delta {tracker.delta_t:.2f}')
-
-    print(f'\nPercentage of Rocket Tracked = %{100*(tracker.box_count/tracker.frame_count):.2f} \nTotal Frames = {tracker.frame_count} \nBoundboxes = {tracker.box_count}')
+    if(tracker.frame_count != 0):
+        print(f'\nPercentage of Rocket Tracked = %{100*(tracker.box_count/tracker.frame_count):.2f} \nTotal Frames = {tracker.frame_count} \nBoundboxes = {tracker.box_count}')
     if SERIAL:
         serial_comm.send_speed_to_arduino([0, 0])
 
