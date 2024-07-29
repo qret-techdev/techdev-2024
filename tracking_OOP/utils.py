@@ -1,8 +1,10 @@
 import datetime
 import cv2
 import pandas as pd
+import os
 
 def initialize_video_writer(cap, width, height, fps):
+    os.makedirs('output_video', exist_ok=True)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"output_video/output_{timestamp}.mp4"
