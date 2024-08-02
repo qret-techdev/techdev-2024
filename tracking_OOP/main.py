@@ -23,7 +23,7 @@ def main():
     result = initialize_video_writer(cap, X_FRAME_SIZE, Y_FRAME_SIZE, fps)
 
     # Define padding parameters (example: 50 pixels padding on each side)
-    top, bottom, left, right = 0, 0, 0 ,0#80, 80
+    top, bottom, left, right = 0, 0, 80, 80
     padding_color = [0, 0, 0]  # Padding color (black)
 
     while True:
@@ -88,12 +88,12 @@ def main():
             tracker.delta_t = time.time() - tracker.prev_time
             tracker.prev_time = time.time()
             tracker.speed = update_speed_and_time(tracker.speed, tracker.accel, tracker.delta_t)
-            tracker.speed[0]=0
+            #tracker.speed[1]=0
         if SERIAL:
             serial_comm.send_speed_to_arduino(tracker.speed)
         print(f'\n State: {tracker.sys_state} | motor_speedx: {tracker.speed[0]:.2f} | motor_speedy: {tracker.speed[1]:.2f} | Accelx: {tracker.accel[0]:.2f} | Accely: {tracker.accel[1]:.2f} | Time Delta {tracker.delta_t:.2f}')
     if(tracker.frame_count != 0):
-        print(f'\nPercentage of Rocket Tracked = %{100*(tracker.box_count/tracker.frame_count):.2f} \nTotal Frames = {tracker.frame_count} \nBoundboxes = {tracker.box_count}')
+        print(f'\nPercentage of Rocket Tracked = {100*(tracker.box_count/tracker.frame_count):.2f}% \nTotal Frames = {tracker.frame_count} \nBoundboxes = {tracker.box_count}')
     if SERIAL:
         serial_comm.send_speed_to_arduino([0, 0])
 
