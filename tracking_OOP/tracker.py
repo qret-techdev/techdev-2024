@@ -65,7 +65,7 @@ class ObjectTracker:
             if self.count:
                 self.box_count += 1
             if conf >= confidence_threshold:
-                annotator.box_label(box, color=colors(int(cls), True), label=f"{self.model.model.names[int(cls)]} {conf:.2f}")
+                annotator.box_label(box, color=colors(int(cls), True), label=f"{conf:.2f}")
                 loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
                 loc_filt = self.process_center(loc)
                 self.track_history[track_id].append((int(loc[0]), int(loc[1])))
