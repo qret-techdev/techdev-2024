@@ -20,7 +20,7 @@ def main():
 
     cap = cv2.VideoCapture(DEVICE_NUMBER)
     w, h, fps = (int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS))
-    result = initialize_video_writer(cap, X_FRAME_SIZE, Y_FRAME_SIZE, fps)
+    result = initialize_video_writer(cap, X_FRAME_SIZE+160, Y_FRAME_SIZE, fps)
 
     # Define padding parameters (example: 50 pixels padding on each side)
     top, bottom, left, right = 0, 0, 80, 80
