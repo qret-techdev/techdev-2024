@@ -1,6 +1,10 @@
 # ignore ALL files in ANY directory named temp
 <<<<<<< HEAD
+<<<<<<< HEAD
 *.mp4
 =======
 >>>>>>> b4a8e289 (Add Ignore PyCache File)
+=======
+
+>>>>>>> a278ff6a (onnx benchmarking results)
 *.pyc
