@@ -36,6 +36,7 @@ class ObjectTracker:
         self.count = False
         self.box_count = 0
         self.frame_count = 0
+        self.color = (128, 128, 128)
             
     def process_center(self, loc: tuple):
         loc_rel = loc - np.array((X_FRAME_SIZE/2, Y_FRAME_SIZE/2))
@@ -48,30 +49,28 @@ class ObjectTracker:
     def process_frame(self, frame, confidence_threshold=0.6):
         loc = (0, 0)
         loc_filt = (0, 0)
-        results = self.model.track(frame, persist=True)
+        results = self.model.track(frame, persist=True, verbose=False)
         boxes = results[0].boxes.xyxy
         confs = results[0].boxes.conf
         if self.count:
             self.frame_count += 1
         if results[0].boxes.id is not None:
             index=np.argmax(confs.cpu().numpy())
-            clss = results[0].boxes.cls.tolist()
             track_ids = results[0].boxes.id.int().tolist()
             annotator = Annotator(frame, line_width=2)
             box = boxes[index]
-            cls=clss[index]
             track_id = track_ids[index]
             conf = confs[index]
             if self.count:
                 self.box_count += 1
             if conf >= confidence_threshold:
-                annotator.box_label(box, color=colors(int(cls), True), label=f"{conf:.2f}")
-                loc = (((box[0] + box[2]) / 2).cpu().numpy(), ((box[1] + box[3]) / 2).cpu().numpy())
-                loc_filt = self.process_center(loc)
+                annotator.box_label(box, color=self.color, label=f"{conf:.2f}")
+                loc = ((int(box[0] + box[2]) / 2), ((box[1] + box[3]) / 2))
                 self.track_history[track_id].append((int(loc[0]), int(loc[1])))
                 if len(self.track_history[track_id]) > 30:
                     self.track_history[track_id].pop(0)
                 points = np.array(self.track_history[track_id], dtype=np.int32).reshape((-1, 1, 2))
-                cv2.circle(frame, self.track_history[track_id][-1], 7, colors(int(cls), True), -1)
-                cv2.polylines(frame, [points], isClosed=False, color=colors(int(cls), True), thickness=2)
+                cv2.circle(frame, self.track_history[track_id][-1], 7, self.color, -1)
+                cv2.polylines(frame, [points], isClosed=False, color=self.color, thickness=2)
+                loc_filt = self.process_center(loc)
         return frame, loc_filt
