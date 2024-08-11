@@ -1,0 +1,26 @@
+# params.csv
+param,value
+tracking_debug,1
+communication_debug,1
+fps_debug,1
+serial_port,COM3
+serial_baudrate,115200
+device_number,0
+confidence,0.6
+avg_number,1
+device_number,0
+frame_width,640
+frame_height,640
+confidence,0.6
+serial_en,0
+kalman,1
+weights,"weights/best.onnx"
+stop_tracking,1.0
+mask_x,0.5
+mask_y,0.5
+pidx,0.04,0.02,0.01
+pidy,0.02,0.00002,0.01
+t_delay,0.40
+tracking_debug,1
+communication_debug,0
+color, 128, 128, 128
