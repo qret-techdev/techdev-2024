@@ -56,8 +56,6 @@ def main():
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     padded_frame = tracker.add_padding(frame)
     tracker.process_frame(padded_frame)   
-    
-    fps = 1/tracker.get_fps() if tracker.get_fps() else 0
 
     cv2.imshow("Webcam", padded_frame)
     result.write(padded_frame)
@@ -82,31 +80,18 @@ def main():
     elif tracker.system_state == 'Launch':
       
       if tracker.time_not_tracking > tracker.config['stop_tracking']:
-        print(f'not tracking for {tracker.time_not_tracking:.2f}s')
-        tracker.reset_tracker()
-        tracker.switch_state()
-        print("Lost Object")
         if serial_comm:
           serial_comm.send_speed_to_arduino((0, 0))
-        tracker.config['serial_en'] = False
+        if tracker.is_debugging_enabled("TRACKING"):
+          print(f'not tracking for {tracker.time_not_tracking:.2f}s')
+          print("Lost Object")
+          
+        tracker.reset_tracker()
+        tracker.switch_state()
     
     if tracker.system_state != 'Boost':
       if serial_comm:
         serial_comm.send_speed_to_arduino((velocity_x, velocity_y))
-
-    if tracker.is_debugging_enabled("TRACKING") and tracker.system_state != 'Boost':
-      print("State:", tracker.system_state)
-      x_center, y_center = tracker.get_center()
-      print(f'Filtered Center: ({x_center:.2f}, {y_center:.2f})')
-    if tracker.is_debugging_enabled("FPS") and tracker.system_state != 'Boost':
-      print(f'FPS: {fps:.2f}')
-    
-    if tracker.is_debugging_enabled("COMMUNICATION"): 
-      
-      if tracker.system_state == 'Launch':
-        print(f'Speed sent to Arduino: {velocity_x:.2f} {velocity_y:.2f}')
-      elif tracker.system_state == 'Manual':
-        print(f'Speed sent to Arduino (Manual): {velocity_x:.2f} {velocity_y:.2f}')
 
   tracker.cleanup(serial_comm, cap, result)
 
