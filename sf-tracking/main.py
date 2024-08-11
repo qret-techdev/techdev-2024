@@ -1,13 +1,13 @@
 import sys
 import cv2
 from utils import get_params, initialize_video_writer
-from tracker import ObjectTracker
+from tracker import SingleObjectTracker
 from serial_comm import SerialCommunication
 
 def main():
   # Load parameters from the CSV file
   
-  tracker = ObjectTracker()
+  tracker = SingleObjectTracker()
   
   serial_comm = SerialCommunication(tracker.config['port'], tracker.config['baudrate']) if tracker.config['serial_en'] == 1 else None
 
