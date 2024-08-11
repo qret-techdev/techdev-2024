@@ -33,7 +33,8 @@ class SingleObjectTracker:
             "baudrate": int(get_params(paramfile, 'serial_baudrate')),
             "port": str(get_params(paramfile, 'serial_port')),
             'device': int(get_params(paramfile, 'device_number')),
-            "serial_en": int(get_params(paramfile, 'serial_en'))
+            "serial_en": int(get_params(paramfile, 'serial_en')),
+            "integer": int(get_params(paramfile, 'integer'))
         }
         self.pid_x.tunings = get_params(paramfile, 'pidx')
         self.pid_y.tunings = get_params(paramfile, 'pidy')
@@ -107,7 +108,7 @@ class SingleObjectTracker:
         return self.vel_x, self.vel_y
         
     def get_fps(self):
-        return self.delta_time
+        return 1/self.delta_time
     
     def get_pid_tunings(self):
         return self.pid_x.tunings, self.pid_y.tunings
@@ -164,10 +165,27 @@ class SingleObjectTracker:
         if self.system_state == 'Launch':
             self.accel_x = self.pid_x(self.center_x + self.config["t_delay"] * (self.center_x - self.prev_center_x) / self.delta_time)
             self.accel_y = -self.pid_y(self.center_y + self.config["t_delay"] * (self.center_y - self.prev_center_y) / self.delta_time)
-            self.vel_x += self.accel_x * self.delta_time
-            self.vel_y += self.accel_y * self.delta_time
+            self.vel_x += self.accel_x * self.delta_time if not self.config['integer'] else int(self.accel_x * self.delta_time)
+            self.vel_y += self.accel_y * self.delta_time if not self.config['integer'] else int(self.accel_y * self.delta_time)
 
         self.prev_center_x, self.prev_center_y = self.center_x, self.center_y
+        
+        if self.is_debugging_enabled("TRACKING") and self.system_state != 'Boost':
+            print("State:", self.system_state)
+            print(f'Filtered Center: ({self.center_x:.2f}, {self.center_y:.2f})')
+        if self.is_debugging_enabled("FPS") and self.system_state != 'Boost':
+            fps = self.get_fps() if self.get_fps() else 0
+            print(f'FPS: {fps:.2f}')
+        
+        if self.is_debugging_enabled("COMMUNICATION"): 
+        
+            if self.system_state == 'Manual':
+                print(f'Speed sent to Arduino (Manual): {self.vel_x:.2f} {self.vel_y:.2f}')
+            elif self.system_state == 'Launch':
+                if(not self.config['integer']):
+                    print(f'Speed sent to Arduino: {self.vel_x:.2f} {self.vel_y:.2f}')
+                else:
+                    print(f'Speed sent to Arduino: {int(self.vel_x)} {int(self.vel_y)}')
 
     def process_center(self, center_x_unfiltered, center_y_unfiltered):
         # Local variables are now handled as class attributes initialized in initialize_variables()
