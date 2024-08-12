@@ -22,10 +22,17 @@ def handle_keypress(tracker, key, serial_comm):
     elif key in [ord('w'), ord('s'), ord('a'), ord('d')]:
         handle_speed_change(tracker, key)
     elif key == ord('\r'): 
+<<<<<<< HEAD
         if tracker.system_state == 'Boost' and serial_comm:
             velocity_x, velocity_y = tracker.get_speed()
             print(f"Sending Boost Y: {velocity_y}")
             serial_comm.send_speed_to_arduino((velocity_x, velocity_y))
+=======
+        if tracker.system_state == 'Boost': #and serial_comm:
+            velocity_x, velocity_y = tracker.get_speed()
+            print(f"Sending Boost Y: {velocity_y}")
+            # serial_comm.send_speed_to_arduino((velocity_x, velocity_y))
+>>>>>>> 5ebab150 (Refactor and optimize tracker codebase)
             tracker.switch_state()
     
     return True
