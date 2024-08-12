@@ -99,7 +99,7 @@ class SingleObjectTracker:
     def change_speed_y(self, increment):
         self.vel_y += increment
             
-    def update_speed_and_time(self):
+    def update_speed_and_time(self, predicted_vel_x, predicted_vel_y):
         current_time = time.time() 
         self.delta_time = current_time - self.prev_time if self.prev_time != 0 else 0.1
         self.prev_time = current_time
@@ -108,8 +108,8 @@ class SingleObjectTracker:
             self.time_not_tracking += self.delta_time
 
         if self.system_state == 'Launch':
-            self.accel_x = self.pid_x(self.center_x + self.config["t_delay"] * (self.center_x - self.prev_center_x) / self.delta_time)
-            self.accel_y = -self.pid_y(self.center_y + self.config["t_delay"] * (self.center_y - self.prev_center_y) / self.delta_time)
+            self.accel_x = self.pid_x(self.center_x + self.config["t_delay"] * predicted_vel_x)
+            self.accel_y = -self.pid_y(self.center_y + self.config["t_delay"] * predicted_vel_x)
             self.change_speed_x(self.accel_x * self.delta_time if not self.config['integer'] else int(self.accel_x * self.delta_time))
             self.change_speed_y(self.accel_y * self.delta_time if not self.config['integer'] else int(self.accel_y * self.delta_time))
 
@@ -151,7 +151,7 @@ class SingleObjectTracker:
             y = self.prev_center_y + self.local_vel_y * delta_time + 0.5 * self.local_accel_y * (delta_time ** 2)
             self.center_x, self.center_y = self.kf_manager.apply_filter((x, y)) if self.config['kalman'] else (x, y)
         
-        self.update_speed_and_time()
+        self.update_speed_and_time(self.local_vel_x, self.local_vel_y)
 
     def cleanup(self, serial_comm, cap, result):
         if serial_comm:
