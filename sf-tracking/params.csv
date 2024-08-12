@@ -15,7 +15,7 @@ frame_height,640
 confidence,0.6
 serial_en,0
 kalman,1
-weights,"weights/best.onnx"
+weights,"weights/yolov8s_242.onnx"
 stop_tracking,1.0
 mask_x,0.5
 mask_y,0.5
