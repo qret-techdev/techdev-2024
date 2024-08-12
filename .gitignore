@@ -3,6 +3,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 *.mp4
+<<<<<<< HEAD
 =======
 >>>>>>> b4a8e289 (Add Ignore PyCache File)
 =======
@@ -12,3 +13,8 @@
 *.mp4
 >>>>>>> 7a7cfae1 (reverted to ignoring mp4s)
 *.pyc
+=======
+*.pyc
+
+secret_sauce.py
+>>>>>>> 2f00b4fa (updated gigignore and added conda environment.yml)
