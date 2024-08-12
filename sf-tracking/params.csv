@@ -22,6 +22,4 @@ mask_y,0.5
 pidx,0.04,0.02,0.01
 pidy,0.02,0.00002,0.01
 t_delay,0.40
-tracking_debug,1
-communication_debug,0
 color, 128, 128, 128
