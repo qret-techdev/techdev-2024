@@ -8,7 +8,7 @@ serial_baudrate,115200
 device_number,0
 integer,1
 confidence,0.6
-avg_number,1
+avg_number,3
 device_number,0
 frame_width,640
 frame_height,640

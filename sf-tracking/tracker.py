@@ -8,8 +8,6 @@ from utils import get_params
 
 class SingleObjectTracker:
     def __init__(self):
-        self.pid_x = PID()
-        self.pid_y = PID()
         self.load_params()
         self.initialize_variables()
 
@@ -36,8 +34,6 @@ class SingleObjectTracker:
             "serial_en": int(get_params(paramfile, 'serial_en')),
             "integer": int(get_params(paramfile, 'integer'))
         }
-        self.pid_x.tunings = get_params(paramfile, 'pidx')
-        self.pid_y.tunings = get_params(paramfile, 'pidy')
 
     def initialize_variables(self):
         self.vel_x = 0
@@ -47,6 +43,8 @@ class SingleObjectTracker:
         self.center_x, self.center_y = (0, 0)
         self.prev_time = 0
         self.delta_time = 0
+        self.mov_avg_vel_x = np.zeros(self.config['avg_number'])
+        self.mov_avg_vel_y = np.zeros(self.config['avg_number'])
         self.ort_session = ort.InferenceSession(self.config['weights'])
         self.system_state = 'Manual'
         self.tracking_state = 0 
@@ -63,6 +61,10 @@ class SingleObjectTracker:
         self.kf_manager = KalmanFilterManager()
         color_r, color_g, color_b = self.config['color']
         self.config['color'] = (int(color_r), int(color_g), int(color_b))
+        self.pid_x = PID()
+        self.pid_y = PID()
+        self.pid_x.tunings = get_params('params.csv', 'pidx')
+        self.pid_y.tunings = get_params('params.csv', 'pidy')
         
         # Initialize local variables for process_center function
         self.local_prev_time = None
@@ -70,8 +72,6 @@ class SingleObjectTracker:
         self.local_vel_y = 0.0
         self.local_accel_x = 0.0
         self.local_accel_y = 0.0
-        self.local_prev_center_x = 0.0
-        self.local_prev_center_y = 0.0
         
     def is_debugging_enabled(self, category):
         """
@@ -126,6 +126,8 @@ class SingleObjectTracker:
         self.center_y = 0
         self.accel_x = 0
         self.accel_y = 0
+        self.mov_avg_vel_x = np.zeros(self.config['avg_number'])
+        self.mov_avg_vel_y = np.zeros(self.config['avg_number'])
         self.prev_center_x = 0
         self.prev_center_y = 0
         self.local_prev_time = None
@@ -133,8 +135,6 @@ class SingleObjectTracker:
         self.local_vel_y = 0.0
         self.local_accel_x = 0.0
         self.local_accel_y = 0.0
-        self.local_prev_center_x = 0.0
-        self.local_prev_center_y = 0.0
 
     def switch_state(self):
         if self.system_state == 'Manual':
@@ -150,7 +150,6 @@ class SingleObjectTracker:
             self.delta_time = current_time - self.prev_time
         else:
             self.delta_time = 0.1  # Small initial delta_time to prevent division by zero
-        self.prev_time = current_time
 
         if self.tracking_state == 0:  # When not tracking
             if self.prev_tracking_time == 0:  # If this is the first time we're not tracking
@@ -169,6 +168,7 @@ class SingleObjectTracker:
             self.vel_y += self.accel_y * self.delta_time if not self.config['integer'] else int(self.accel_y * self.delta_time)
 
         self.prev_center_x, self.prev_center_y = self.center_x, self.center_y
+        self.prev_time = current_time
         
         if self.is_debugging_enabled("TRACKING") and self.system_state != 'Boost':
             print("State:", self.system_state)
@@ -186,6 +186,20 @@ class SingleObjectTracker:
                     print(f'Speed sent to Arduino: {self.vel_x:.2f} {self.vel_y:.2f}')
                 else:
                     print(f'Speed sent to Arduino: {int(self.vel_x)} {int(self.vel_y)}')
+                    
+    def rolling_average(self, velocity: tuple):
+        weights = np.linspace(1, 0, self.config['avg_number'])
+        weights /= weights.sum()  # Normalize weights
+        
+        self.mov_avg_vel_x = np.roll(self.mov_avg_vel_x, -1)
+        self.mov_avg_vel_y = np.roll(self.mov_avg_vel_y, -1)
+        self.mov_avg_vel_x[-1] = velocity[0]
+        self.mov_avg_vel_y[-1] = velocity[1]
+        
+        weighted_avg_vel_x = np.dot(self.mov_avg_vel_x, weights)
+        weighted_avg_vel_y = np.dot(self.mov_avg_vel_y, weights)
+        
+        return weighted_avg_vel_x, weighted_avg_vel_y
 
     def process_center(self, center_x_unfiltered, center_y_unfiltered):
         # Local variables are now handled as class attributes initialized in initialize_variables()
@@ -194,9 +208,7 @@ class SingleObjectTracker:
         local_vel_y = self.local_vel_y
         local_accel_x = self.local_accel_x
         local_accel_y = self.local_accel_y
-        local_prev_center_x = self.local_prev_center_x
-        local_prev_center_y = self.local_prev_center_y
-         
+        
         # Compute delta time
         current_time = time.time()  # Use high-resolution timer for accuracy
         if local_prev_time is not None:
@@ -208,39 +220,35 @@ class SingleObjectTracker:
             (x, y) = (center_x_unfiltered, center_y_unfiltered) - np.array([(self.config['frame_width'])/2, (self.config['frame_height'])/2])
             x_filtered, y_filtered = self.kf_manager.apply_filter((x, y)) if self.config['kalman'] else (x, y)
             
-            self.center_x = x_filtered if (abs(x_filtered -  local_prev_center_x) > self.config['mask_x']) else local_prev_center_x
-            self.center_y = y_filtered if (abs(y_filtered - local_prev_center_y) > self.config['mask_y']) else local_prev_center_y
+            self.center_x = x_filtered if (abs(x_filtered - self.prev_center_x) > self.config['mask_x']) else self.prev_center_x
+            self.center_y = y_filtered if (abs(y_filtered - self.prev_center_y) > self.config['mask_y']) else self.prev_center_y
             
             # Calculate velocity in pixels per second
-            local_vel_x = (self.center_x - local_prev_center_x) / delta_time
-            local_vel_y = (self.center_y - local_prev_center_y) / delta_time
+            if len(self.mov_avg_vel_x) > 1:
+                local_vel_x, local_vel_y = self.rolling_average((
+                    (self.center_x - self.prev_center_x) / delta_time, 
+                    (self.center_y - self.prev_center_y) / delta_time
+                ))
+            else:
+                local_vel_x = (self.center_x - self.prev_center_x) / delta_time
+                local_vel_y = (self.center_y - self.prev_center_y) / delta_time
             
             # Calculate acceleration in pixels per second squared
-            local_accel_x = (local_vel_x - local_vel_x) / delta_time
-            local_accel_y = (local_vel_y - local_vel_y) / delta_time
+            local_accel_x = (local_vel_x - self.local_vel_x) / delta_time
+            local_accel_y = (local_vel_y - self.local_vel_y) / delta_time
             
         else:
             # Use previous velocity and acceleration to estimate position if detection is lost
-            x = local_prev_center_x + local_vel_x * delta_time + 0.5 * local_accel_x * (delta_time ** 2)
-            y = local_prev_center_y + local_vel_y * delta_time + 0.5 * local_accel_y * (delta_time ** 2)
-            self.center_x, self.center_y= self.kf_manager.apply_filter((x, y)) if self.config['kalman'] else (x, y)
-            
-            # Velocity remains the same as no new detection is available
-            local_vel_x = local_vel_x
-            local_vel_y = local_vel_y
-            
-            # Acceleration remains the same as no new detection is available
-            local_accel_x = local_accel_x
-            local_accel_y = local_accel_y
-
-        # Update previous position, velocity, and acceleration for next iteration
-        self.local_prev_center_x, self.local_prev_center_y = self.center_x, self.center_y
+            x = self.prev_center_x + local_vel_x * delta_time + 0.5 * local_accel_x * (delta_time ** 2)
+            y = self.prev_center_y + local_vel_y * delta_time + 0.5 * local_accel_y * (delta_time ** 2)
+            self.center_x, self.center_y = self.kf_manager.apply_filter((x, y)) if self.config['kalman'] else (x, y)
+        
+        # Update previous velocity, acceleration, and time for the next iteration
         self.local_vel_x, self.local_vel_y = local_vel_x, local_vel_y
         self.local_accel_x, self.local_accel_y = local_accel_x, local_accel_y
         self.local_prev_time = current_time
 
         self.update_speed_and_time()
-
 
     def cleanup(self, serial_comm, cap, result):
         if serial_comm:
