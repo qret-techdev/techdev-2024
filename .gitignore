@@ -1,3 +1,5 @@
 # ignore ALL files in ANY directory named temp
 *.mp4
 *.pyc
+
+secret_sauce.py
