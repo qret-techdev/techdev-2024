@@ -52,9 +52,9 @@ def main():
         # Add padding to the image
         padded_frame = cv2.copyMakeBorder(frame, top, bottom, left, right, cv2.BORDER_CONSTANT, value=padding_color)
         
-        loc_x_y_unfilt = tracker.process_frame(padded_frame, CONFIDENCE)[1]
-        print(loc_x_y_unfilt[0], loc_x_y_unfilt[1])
-        tracker.loc_x_y_filt = kf_manager.apply_filter(loc_x_y_unfilt) if KALMAN else loc_x_y_unfilt
+        #loc_x_y_unfilt = tracker.process_frame(padded_frame, CONFIDENCE)[1]
+        #print(loc_x_y_unfilt[0], loc_x_y_unfilt[1])
+        #tracker.loc_x_y_filt = kf_manager.apply_filter(loc_x_y_unfilt) if KALMAN else loc_x_y_unfilt
         print(tracker.loc_x_y_filt[0], tracker.loc_x_y_filt[1])
         cv2.imshow("Webcam", padded_frame)
         result.write(padded_frame)
@@ -90,7 +90,7 @@ def main():
             tracker.speed = update_speed_and_time(tracker.speed, tracker.accel, tracker.delta_t)
         if SERIAL:
             serial_comm.send_speed_to_arduino(tracker.speed)
-        print(f'\n State: {tracker.sys_state} | motor_speedx: {tracker.speed[0]:.2f} | motor_speedy: {tracker.speed[1]:.2f} | Accelx: {tracker.accel[0]:.2f} | Accely: {tracker.accel[1]:.2f} | Time Delta {tracker.delta_t:.2f}')
+        print(f'\n State: {tracker.sys_state} | motor_speedx: {tracker.speed[0]:.2f} | motor_speedy: {tracker.speed[1]:.2f} | Accelx: {tracker.accel[0]:.2f} | Accely: {tracker.accel[1]:.2f} | FPS: {(1/tracker.delta_t):.2f}')
     if(tracker.frame_count != 0):
         print(f'\nPercentage of Rocket Tracked = %{100*(tracker.box_count/tracker.frame_count):.2f} \nTotal Frames = {tracker.frame_count} \nBoundboxes = {tracker.box_count}')
     if SERIAL:

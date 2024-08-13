@@ -1,0 +1,42 @@
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -26.47 | Accely: 0.53 | FPS: 11.28
+145.0 17.526214599609375
+145.71282760947616 16.64720331048716
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -25.76 | Accely: 2.71 | FPS: 11.78
+141.0 16.40692138671875
+142.03316300454586 16.459596853523323
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -26.50 | Accely: -2.27 | FPS: 11.51
+140.0 16.34625244140625
+140.44571730022213 16.371100210744533
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -29.02 | Accely: 0.29 | FPS: 11.62
+146.0 17.88714599609375
+144.7823701867089 17.554792990974054
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -33.86 | Accely: 1.51 | FPS: 11.88
+147.0 19.509735107421875
+146.5138432230656 19.081165671382823
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -28.41 | Accely: 0.78 | FPS: 11.54
+144.5 22.6385498046875
+144.94148194829856 21.858687271184532
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -27.43 | Accely: 1.55 | FPS: 10.87
+143.5 22.564453125
+143.81600685280918 22.409732598289516
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -29.44 | Accely: -1.05 | FPS: 11.96
+141.5 21.75
+142.00772334506482 21.89462895100918
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -28.70 | Accely: -0.62 | FPS: 12.39
+140.5 21.377685546875
+140.83052852985307 21.49101173761483
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -29.95 | Accely: 0.32 | FPS: 12.12
+139.5 25.770904541015625
+139.79168324569585 24.83265106045022
+
+ State: 0 | motor_speedx: 0.00 | motor_speedy: 0.00 | Accelx: -29.76 | Accely: 4.32 | FPS: 13.23
