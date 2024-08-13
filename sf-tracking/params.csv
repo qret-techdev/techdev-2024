@@ -5,15 +5,14 @@ communication_debug,1
 fps_debug,1
 serial_port,COM3
 serial_baudrate,115200
-device_number,0
 integer,0
 confidence,0.4
 avg_number,3
-device_number,0
+device_number,1
 frame_width,640
 frame_height,640
 confidence,0.6
-serial_en,0
+serial_en,1
 kalman,1
 weights,"weights/yolov8s_378.onnx"
 stop_tracking,1.0

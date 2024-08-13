@@ -60,7 +60,7 @@ def handle_speed_change(tracker, key):
 
 def main():
     tracker = SingleObjectTracker()
-    serial_comm = SerialCommunication(tracker.config['port'], tracker.config['baudrate']) if tracker.config['serial_en'] else None
+    serial_comm = SerialCommunication(tracker.config['serial_port'], tracker.config['serial_baudrate']) if tracker.config['serial_en'] else None
 
     cap = cv2.VideoCapture(tracker.config['device_number'])
     result = initialize_video_writer(cap, tracker.config['frame_width'], tracker.config['frame_height'], 30)
