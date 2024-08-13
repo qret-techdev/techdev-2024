@@ -10,6 +10,7 @@ class SingleObjectTracker:
     def __init__(self):
         self.load_params()
         self.initialize_variables()
+        print(ort.get_device())
 
     def load_params(self, paramfile='params.csv'):
         self.config = {
@@ -40,7 +41,8 @@ class SingleObjectTracker:
         self.prev_time = self.delta_time = 0.0
         self.mov_avg_vel_x = np.zeros(self.config['avg_number'])
         self.mov_avg_vel_y = np.zeros(self.config['avg_number'])
-        self.ort_session = ort.InferenceSession(self.config['weights'])
+        providers = ['CUDAExecutionProvider'] 
+        self.ort_session = ort.InferenceSession(self.config['weights'], providers=providers)
         self.system_state = 'Manual'
         self.tracking_state = 0 
         self.time_not_tracking = 0.0
