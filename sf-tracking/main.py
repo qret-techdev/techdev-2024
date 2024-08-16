@@ -2,9 +2,8 @@ import sys
 import cv2
 from utils import get_params, initialize_video_writer
 from tracker import SingleObjectTracker
-from serial_comm import SerialCommunication
 
-def handle_keypress(tracker, key, serial_comm):
+def handle_keypress(tracker, key):
     """
     Handles keypress events.
     """
@@ -22,10 +21,10 @@ def handle_keypress(tracker, key, serial_comm):
     elif key in [ord('w'), ord('s'), ord('a'), ord('d')]:
         handle_speed_change(tracker, key)
     elif key == ord('\r'): 
-        if tracker.system_state == 'Boost' and serial_comm:
+        if tracker.system_state == 'Boost' and tracker.serial_comm:
             velocity_x, velocity_y = tracker.get_speed()
             print(f"Sending Boost Y: {velocity_y}")
-            serial_comm.send_speed_to_arduino((velocity_x, velocity_y))
+            tracker.serial_com.send_speed_to_arduino((velocity_x, velocity_y))
             tracker.switch_state()
     
     return True
@@ -43,17 +42,16 @@ def handle_speed_change(tracker, key):
     Adjusts the speed based on keypress.
     """
     if key == ord('w'):
-        tracker.change_speed_y(1)
+        tracker.increment_y(1)
     elif key == ord('s'):
-        tracker.change_speed_y(-1)
+        tracker.increment_y(-1)
     elif key == ord('a'):
-        tracker.change_speed_x(-1)
+        tracker.increment_x(-1)
     elif key == ord('d'):
-        tracker.change_speed_x(1)
+        tracker.increment_x(1)
 
 def main():
     tracker = SingleObjectTracker()
-    serial_comm = SerialCommunication(tracker.config['serial_port'], tracker.config['serial_baudrate']) if tracker.config['serial_en'] else None
 
     cap = cv2.VideoCapture(tracker.config['device_number'])
     result = initialize_video_writer(cap, tracker.config['frame_width'], tracker.config['frame_height'], 30)
@@ -61,7 +59,7 @@ def main():
 
     while True:
         key = cv2.waitKey(1)
-        if not handle_keypress(tracker, key, serial_comm):
+        if not handle_keypress(tracker, key):
             break
 
         success, frame = cap.read()
@@ -69,7 +67,7 @@ def main():
             break
 
         frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        padded_frame = tracker.add_padding(frame)
+        padded_frame = cv2.copyMakeBorder(src=frame, top=0, bottom=0, left=80, right=80, borderType=cv2.BORDER_CONSTANT, value=[0, 0, 0])
         tracker.process_frame(padded_frame)
         cv2.imshow("Webcam", padded_frame)
         result.write(padded_frame)
@@ -85,10 +83,7 @@ def main():
             sys.stdout.write(f"Boost Y: {velocity_y}\r")
             sys.stdout.flush()
 
-        if tracker.system_state != 'Boost' and serial_comm:
-            serial_comm.send_speed_to_arduino((velocity_x, velocity_y))
-
-    tracker.cleanup(serial_comm, cap, result)
+    tracker.cleanup(cap, result)
 
 if __name__ == "__main__":
     main()
