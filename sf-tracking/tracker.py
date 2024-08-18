@@ -96,9 +96,9 @@ class SingleObjectTracker:
         self.prev_time_speed = current_time
         if self.system_state == 'Launch':
             accel_x = self.pid_x(center_x + self.config["t_delay"] * estimated_vel_x)
-            accel_y = -self.pid_y(center_y + self.config["t_delay"] * estimated_vel_y)
-            speed_x = (accel_x / delta_time if not self.config['integer'] else int(accel_x / delta_time))
-            speed_y = (accel_y / delta_time if not self.config['integer'] else int(accel_y / delta_time))
+            accel_y = self.pid_y(center_y + self.config["t_delay"] * estimated_vel_y)
+            speed_x = (accel_x * delta_time if not self.config['integer'] else int(accel_x * delta_time))
+            speed_y = (accel_y * delta_time if not self.config['integer'] else int(accel_y * delta_time))
         else:
             speed_x = self.vel_x
             speed_y = self.vel_y

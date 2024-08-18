@@ -2,6 +2,7 @@ import sys
 import cv2
 from utils import get_params, initialize_video_writer
 from tracker import SingleObjectTracker
+import time
 
 def handle_keypress(tracker, key):
     """
@@ -42,13 +43,13 @@ def handle_speed_change(tracker, key):
     Adjusts the speed based on keypress.
     """
     if key == ord('w'):
-        tracker.increment_y(1)
+        tracker.increment_y(3)
     elif key == ord('s'):
-        tracker.increment_y(-1)
+        tracker.increment_y(-3)
     elif key == ord('a'):
-        tracker.increment_x(-1)
+        tracker.increment_x(-3)
     elif key == ord('d'):
-        tracker.increment_x(1)
+        tracker.increment_x(3)
 
 def main():
     tracker = SingleObjectTracker()

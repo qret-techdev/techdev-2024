@@ -55,49 +55,49 @@ void setup() {
 void loop() {
 
   //read battery voltage
-  battVolt = (5*((float)analogRead(readBatt))/1024)*4;
-  Serial.println(battVolt);
+  // battVolt = (5*((float)analogRead(readBatt))/1024)*4;
+  // Serial.println(battVolt);
 
-  //updating time
-  unsigned long currMills = millis();
+  // //updating time
+  // unsigned long currMills = millis();
 
-  //if a second has passed
-  if(currMills - prevMills >= 1000){
-    prevMills = currMills;
-    LEDStates = !LEDStates;
-    if(battVolt > 15){
-      digitalWrite(greenLED, LEDStates);
-      digitalWrite(redLED, 0);
-    }else{
-      digitalWrite(redLED, LEDStates);
-      digitalWrite(greenLED, 0);
-    }
-  }
+  // //if a second has passed
+  // if(currMills - prevMills >= 1000){
+  //   prevMills = currMills;
+  //   LEDStates = !LEDStates;
+  //   if(battVolt > 15){
+  //     digitalWrite(greenLED, LEDStates);
+  //     digitalWrite(redLED, 0);
+  //   }else{
+  //     digitalWrite(redLED, LEDStates);
+  //     digitalWrite(greenLED, 0);
+  //   }
+  // }
   
   if (Serial.available() > 0) {
     // Expecting input format: speed1 speed2
     float speed1 = Serial.parseFloat(); // Reads the first speed until it encounters a non-integer character
     float speed2 = Serial.parseFloat(); // Reads the next integer after the space
-    Serial.print(speed1);
-    Serial.println(speed2);
+    // Serial.print(speed1);
+    // Serial.println(speed2);
     
     // Apply the speeds to the stepper motors
-    if (1) {
+    // if (1) {
       
       speed1 = -1*(speed1/360)*6400;
       speed2 = (speed2/360)*6400;
       
       myStepper1.setSpeed(speed1);
-      Serial.print("Speed1: ");
+      // Serial.print("Speed1: ");
       Serial.print(speed1 + String(" | "));
       myStepper2.setSpeed(speed2);
-      Serial.print(" Speed2: ");
+      // Serial.print(" Speed2: ");
       Serial.println(speed2);
-    } else {
-      Serial.println("Invalid input. Enter positive numbers separated by a space.");
-    }
+    // } else {
+    //   Serial.println("Invalid input. Enter positive numbers separated by a space.");
+    // }
 
-    // Clear the serial buffer by reading until newline or timeout
+    // // Clear the serial buffer by reading until newline or timeout
     while (Serial.available() > 0) {
       char c = Serial.read();
       if (c == '\n' || c == '\r') break;

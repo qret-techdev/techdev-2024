@@ -5,7 +5,7 @@ class KalmanFilterManager:
     """
     Manages the Kalman filtering process for tracking positions based on noisy x, y coordinates.
     """
-    def __init__(self, num_objects=1, initial_noise=10.0, obs_noise=0.1, process_noise=0.05):
+    def __init__(self, num_objects=1, initial_noise=1.0, obs_noise=0.5, process_noise=0.05):
         self.num_objects = num_objects
         self.STATE_DIM = 2  # State dimension (x, y coordinates)
         self.OBS_DIM = 2    # Observation dimension (noisy x, y coordinates)
